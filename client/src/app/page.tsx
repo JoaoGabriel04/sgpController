@@ -107,8 +107,9 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="w-full h-25 flex justify-center items-center mt-10 border-t border-zinc-800/10 text-zinc-800/40 text-sm">
-        SuperMáquina - Versão Digital do Clássico Jogo de Tabuleiro
+      <footer className="w-full h-25 flex flex-col justify-center items-center mt-10 border-t border-zinc-800/10 text-zinc-800/40 text-sm">
+        <span>SuperMáquina - Versão Digital do Clássico Jogo de Tabuleiro</span>
+        <span>v1.2.2</span>
       </footer>
 
       <Modal
