@@ -6,9 +6,7 @@ Esse projeto foi criado para dar mais dinâmica à função do "b"anqueiro" no j
 
 ## 🚀 Demonstração
 
-Se possível, coloque aqui:
-- Link de acesso (ex: deploy do site, API, app, etc.)
-- Capturas de tela ou GIFs demonstrando o funcionamento.
+- [Link de acesso do site](https://sgpcontroller.netlify.app/)
 
 Exemplo:
 

@@ -1,5 +1,5 @@
 import {Router} from "express"
-import bancoController from "../../modules/banco/banco.controller"
+import bancoController from "../../modules/banco/banco.controller.js"
 
 const bancoRouter = Router();
 

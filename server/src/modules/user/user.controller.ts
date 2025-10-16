@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import propsController from "../propriedade/propriedade.controller";
 
 const prisma = new PrismaClient();
 

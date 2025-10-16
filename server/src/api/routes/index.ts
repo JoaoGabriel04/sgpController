@@ -1,9 +1,9 @@
 import {Router} from "express"
-import sessionRouter from "./session.route"
-import propRouter from "./propriedade.route"
-import userRouter from "./user.route"
-import histRouter from "./historico.route"
-import bancoRouter from "./banco.route"
+import sessionRouter from "./session.route.js"
+import propRouter from "./propriedade.route.js"
+import userRouter from "./user.route.js"
+import histRouter from "./historico.route.js"
+import bancoRouter from "./banco.route.js"
 
 const apiRouter = Router()
 

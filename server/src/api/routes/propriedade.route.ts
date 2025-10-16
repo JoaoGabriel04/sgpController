@@ -1,5 +1,5 @@
 import {Router} from "express"
-import propsController from "../../modules/propriedade/propriedade.controller";
+import propsController from "../../modules/propriedade/propriedade.controller.js";
 
 const propRouter = Router();
 
