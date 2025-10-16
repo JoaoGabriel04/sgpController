@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 7000;
 const app = express();
 
 const allowedOrigins = [
-  "https://sgpcontroller.netlify.app/",
+  "https://sgpcontroller.netlify.app",
   "http://localhost:3000" // para desenvolvimento local
 ];
 
