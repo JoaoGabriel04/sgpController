@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Propriedade {
+  id            Int    @id
+  nome          String
+  grupo_cor     String
+  tipo          String
+  custo_compra  Int
+  aluguel_base  Int
+  aluguel_1c    Int
+  aluguel_2c    Int
+  aluguel_3c    Int
+  aluguel_4c    Int
+  aluguel_hotel Int
+  custo_casa    Int
+  hipoteca      Int
+
+  posses Posses[]
+
+  @@map("propriedades")
+}
+
+model Session {
+  id         Int      @id @default(autoincrement())
+  nome       String? // opcional
+  dataInicio DateTime @default(now())
+
+  sessionPosses SessionPosses[]
+  historico     Historico[]
+  jogadores     SessionPlayer[]
+
+  @@map("sessions")
+}
+
+// Jogadores “fictícios” dentro da sessão
+model SessionPlayer {
+  id        Int     @id @default(autoincrement()) // id único da sessão
+  sessionId Int
+  session   Session @relation(fields: [sessionId], references: [id])
+
+  nome  String
+  cor   String
+  saldo Float
+
+  sessionPosses SessionPosses[] // para referenciar quais posses pertencem a esse jogador
+
+  @@map("session_players")
+}
+
+// Posses base do jogo (globais)
+model Posses {
+  id          Int         @id @default(autoincrement())
+  id_prop     Int
+  propriedade Propriedade @relation(fields: [id_prop], references: [id])
+
+  casas      Int     @default(0)
+  hipotecada Boolean @default(false)
+
+  sessionPosses SessionPosses[]
+
+  @@map("posses")
+}
+
+// Estado das posses dentro de uma sessão
+model SessionPosses {
+  id        Int     @id @default(autoincrement())
+  sessionId Int
+  session   Session @relation(fields: [sessionId], references: [id])
+
+  possesId Int
+  posses   Posses @relation(fields: [possesId], references: [id])
+
+  playerId Int? // jogador fictício dono dessa posse
+  player   SessionPlayer? @relation(fields: [playerId], references: [id])
+
+  casas      Int     @default(0) // sobrescreve da posse base
+  hipotecada Boolean @default(false)
+}
+
+// Histórico de transações
+model Historico {
+  id        Int     @id @default(autoincrement())
+  sessionId Int
+  session   Session @relation(fields: [sessionId], references: [id])
+
+  data     DateTime
+  tipo     String
+  detalhes String
+
+  @@map("historico")
+}
