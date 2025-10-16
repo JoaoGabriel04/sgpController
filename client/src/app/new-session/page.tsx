@@ -23,6 +23,8 @@ export default function NewSession() {
   const router = useRouter();
   const { createSession } = useGameStore();
 
+  const [reqLoading, setReqLoading] = useState(false);
+
   const [numPlayers, setNumPlayers] = useState(2);
   const [players, setPlayers] = useState<PlayerForm[]>([
     { nome: "", cor: null, saldo: 0 },
@@ -126,9 +128,11 @@ export default function NewSession() {
     }));
 
     try {
+      setReqLoading(true);
       const sessionId = await createSession(validPlayers); // ✅ await
       if (sessionId) {
         toast.success("Sessão criada com sucesso!");
+        setReqLoading(false);
         router.push(`/game/${sessionId}`);
       } else {
         toast.error("Erro ao criar sessão");
@@ -313,8 +317,9 @@ export default function NewSession() {
             </div>
 
             <button
+              disabled={reqLoading}
               onClick={handleCreateSession}
-              className="w-full mt-6 bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-6 rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg cursor-pointer"
+              className="w-full mt-6 bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-6 rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Iniciar Jogo
             </button>
