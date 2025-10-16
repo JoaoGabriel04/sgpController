@@ -31,6 +31,8 @@ export default function Especiais() {
   const [modalTroca, setModalTroca] = useState(false);
   const [modalReceber, setModalReceber] = useState(false);
 
+  const [reqLoading, setReqLoading] = useState(false);
+
   const [selectedPlayer1, setSelectedPlayer1] = useState<Player | null>(null);
   const [selectedPlayer2, setSelectedPlayer2] = useState<Player | null>(null);
 
@@ -91,7 +93,7 @@ export default function Especiais() {
     userId: number | undefined,
     propriedadeId: number | undefined
   ) {
-    if (userId == null || propriedadeId == null) return;
+    if (userId == null || propriedadeId == null || userId === 0) return toast.warning("Campos Vazios!");
     if (!currentSession) return;
 
     try {
@@ -102,6 +104,7 @@ export default function Especiais() {
       if (propSelected?.casas)
         return toast.warning("Essa propriedade ainda possui casas!");
 
+      setReqLoading(true);
       await trocaPropriedades({
         userId,
         sessionId: currentSession.id,
@@ -111,6 +114,7 @@ export default function Especiais() {
       toast.success("Transferência realizada com sucesso!");
       await loadSession(currentSession.id);
       setModalTroca(false);
+      setReqLoading(false);
       resetarValores();
     } catch (error) {
       console.error("Erro ao trocar propriedade!", error);
@@ -129,6 +133,7 @@ export default function Especiais() {
     })
 
     try {
+      setReqLoading(true);
       await receberDeTodos({
         userId,
         sessionId: currentSession.id
@@ -137,6 +142,7 @@ export default function Especiais() {
       toast.success("Transferências realizadas com sucesso!");
       await loadSession(currentSession.id);
       setModalReceber(false);
+      setReqLoading(false);
       resetarValores();
     }catch (error){
       console.error("Erro ao trocar propriedade!", error);
@@ -191,6 +197,7 @@ export default function Especiais() {
             <SelectValue placeholder="Selecione o Jogador!" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="0">Selecione</SelectItem>
             {currentSession?.jogadores
               .filter((p) => p.id !== selectedPlayer2?.id)
               .map((player) => (
@@ -216,6 +223,7 @@ export default function Especiais() {
             <SelectValue placeholder="Selecione o Jogador!" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="0">Selecione</SelectItem>
             {currentSession?.jogadores
               .filter((p) => p.id !== selectedPlayer1?.id)
               .map((player) => (
@@ -244,6 +252,7 @@ export default function Especiais() {
             {currentSession?.sessionPosses
               .filter((p) => !!p.playerId)
               .filter((p) => p.playerId !== selectedPlayer1?.id)
+              .filter((p) => p.playerId === selectedPlayer2?.id)
               .map((poss) => {
                 const propData = propsCache[poss.possesId];
                 const label = propData?.nome ?? `Carregando...`;
@@ -293,7 +302,7 @@ export default function Especiais() {
             onClick={() => {
               trocarPropriedade(selectedPlayer1?.id, propsDetails?.possesId);
             }}
-            disabled={!selectedPlayer1 || !propsDetails}
+            disabled={reqLoading || !selectedPlayer1 || !propsDetails}
             className="px-16 py-1 bg-green-500 hover:bg-green-600 text-white rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Confirmar
@@ -336,7 +345,7 @@ export default function Especiais() {
             onClick={() => {
               handleReceberDeTodos(selectedPlayer1?.id);
             }}
-            disabled={!selectedPlayer1}
+            disabled={reqLoading || !selectedPlayer1}
             className="px-16 py-1 bg-green-500 hover:bg-green-600 text-white rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Confirmar

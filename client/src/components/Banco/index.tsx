@@ -47,6 +47,8 @@ export default function Banco() {
   const [valorOperacao, setValorOperacao] = useState(0);
   const [numeroDados, setNumeroDados] = useState(0);
 
+  const [reqLoading, setReqLoading] = useState(false);
+
   useEffect(() => {
     console.log(selectedPlayer1, valorOperacao);
   }, [selectedPlayer1, valorOperacao]);
@@ -103,12 +105,16 @@ export default function Banco() {
       return toast.error("Campos vazios ou valor inválido!");
     if (!currentSession) return;
 
+    if (valor >= 10000000) return toast.warning("Valor muito alto!")
+
     try {
+      setReqLoading(true);
       await deposito({ userId, sessionId: currentSession.id, valor });
 
       toast.success("Depósito realizado com sucesso!");
       await loadSession(currentSession.id);
       setModalDeposito(false);
+      setReqLoading(false);
       resetarValores();
     } catch (error) {
       console.error("Erro no depósito!", error);
@@ -128,11 +134,13 @@ export default function Banco() {
       if (!player) return toast.error("Jogador não encontrado!");
       if (player?.saldo < valor) return toast.error("Saldo insuficiente!");
 
+      setReqLoading(true);
       await saque({ userId, sessionId: currentSession.id, valor });
 
       toast.success("Saque realizado com sucesso!");
       await loadSession(currentSession.id);
       setModalSaque(false);
+      setReqLoading(false);
       resetarValores();
     } catch (error) {
       console.error("Erro no saque!", error);
@@ -147,7 +155,7 @@ export default function Banco() {
     recebedor: number | undefined,
     valor: number
   ) {
-    if (pagador == null || recebedor == null || valor <= 0)
+    if (pagador == null || recebedor == null || valor <= 0 || pagador === 0 || recebedor === 0)
       return toast.error("Campos vazios ou valor inválido!");
     if (!currentSession) return;
 
@@ -156,6 +164,7 @@ export default function Banco() {
       if (!player) return toast.error("Jogador não encontrado!");
       if (player.saldo < valor) return toast.error("Saldo insuficiente!");
 
+      setReqLoading(true);
       await transferencia({
         recebedorId: recebedor,
         pagadorId: pagador,
@@ -166,6 +175,7 @@ export default function Banco() {
       toast.success("Transferência realizada com sucesso!");
       await loadSession(currentSession.id);
       setModalTransferencia(false);
+      setReqLoading(false);
       resetarValores();
     } catch (error) {
       console.error("Erro na transferencia!", error);
@@ -184,6 +194,7 @@ export default function Banco() {
 
     try {
       if (propsDetails && propsCache[propsDetails.possesId]?.tipo === "ação") {
+        setReqLoading(true);
         await aluguelAcao({
           sessionId: currentSession.id,
           pagadorId,
@@ -197,6 +208,7 @@ export default function Banco() {
         return;
       }
 
+      setReqLoading(true);
       await aluguel({
         sessionId: currentSession.id,
         pagadorId,
@@ -205,6 +217,7 @@ export default function Banco() {
       toast.success("Aluguel pago com sucesso!");
       await loadSession(currentSession.id);
       setModalAluguel(false);
+      setReqLoading(false);
       resetarValores();
     } catch (error) {
       console.error("Erro ao pagar o aluguel.", error);
@@ -295,6 +308,7 @@ export default function Banco() {
 
         <div className="w-full flex justify-center items-center">
           <button
+            disabled={reqLoading || !selectedPlayer1 || valorOperacao <= 0}
             onClick={() => depositar(selectedPlayer1?.id, valorOperacao)}
             className="px-16 py-1 mt-5 bg-green-500 hover:bg-green-600 text-white rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -342,6 +356,7 @@ export default function Banco() {
 
         <div className="w-full flex justify-center items-center">
           <button
+            disabled={reqLoading || !selectedPlayer1 || valorOperacao <= 0}
             onClick={() => retirar(selectedPlayer1?.id, valorOperacao)}
             className="px-16 py-1 mt-5 bg-green-500 hover:bg-green-600 text-white rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -369,6 +384,7 @@ export default function Banco() {
             <SelectValue placeholder="Selecione o Jogador!" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="0">Selecione</SelectItem>
             {currentSession?.jogadores.map((player) => (
               <SelectItem key={player.id} value={String(player.id)}>
                 {player.nome}
@@ -390,6 +406,7 @@ export default function Banco() {
             <SelectValue placeholder="Selecione o Jogador!" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="0">Selecione</SelectItem>
             {currentSession?.jogadores.map((player) => (
               <SelectItem key={player.id} value={String(player.id)}>
                 {player.nome}
@@ -408,6 +425,7 @@ export default function Banco() {
 
         <div className="w-full flex justify-center items-center">
           <button
+            disabled={reqLoading || !selectedPlayer1 || !selectedPlayer2 || valorOperacao <= 0}
             onClick={() =>
               transferir(
                 selectedPlayer1?.id,
@@ -536,7 +554,7 @@ export default function Banco() {
             onClick={() => {
               pagarAluguel(selectedPlayer1?.id, propsDetails?.id);
             }}
-            disabled={!selectedPlayer1 || !propsDetails}
+            disabled={reqLoading || !selectedPlayer1 || !propsDetails}
             className="px-16 py-1 bg-green-500 hover:bg-green-600 text-white rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Confirmar

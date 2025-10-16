@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Historico from "@/components/Historico";
 import Modal from "@/components/Modal";
+import Link from "next/link";
 
 const linksNav = ["Início", "Banco", "Propriedades", "Especiais", "Histórico"];
 
@@ -109,9 +110,9 @@ export default function Game() {
   return (
     <main className="w-full flex flex-col px-4 pb-6">
       <header className="w-full py-2 flex flex-col items-center">
-        <h1 className="mt-4 text-4xl font-bold bg-linear-to-r from-blue-800 to-purple-700 bg-clip-text text-transparent">
-          Super Maquininha Pro
-        </h1>
+        <Link href={"/"} className="mt-4 text-4xl font-bold bg-linear-to-r from-blue-800 to-purple-700 bg-clip-text text-transparent">
+          Super Gerenciador de Partidas
+        </Link>
 
         <div className="w-full flex lg:flex-col justify-between items-center mt-4 lg:mt-1">
           <div className="w-full flex lg:justify-end items-center space-x-3">

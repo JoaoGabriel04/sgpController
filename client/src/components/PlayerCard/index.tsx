@@ -54,6 +54,8 @@ export default function PlayerCard({ player }: PlayerCardProps) {
   const [selectedPropForAction, setSelectedPropForAction] =
     useState<Propriedade | null>(null);
 
+  const [reqLoading, setReqLoading] = useState(false);
+
   const playerColor = PLAYER_COLORS.find((color) => color.value === player.cor);
 
   // 🔁 Atualiza propriedades do jogador
@@ -131,11 +133,14 @@ export default function PlayerCard({ player }: PlayerCardProps) {
     if (!currentSession) return;
 
     try {
+      setReqLoading(true);
       await buyHouse({ userId, sessionId: currentSession.id, propriedadeId });
 
       toast.success("Casa comprada com sucesso!");
+      setReqLoading(false);
       loadSession(currentSession.id);
       setOptionsModal(false); // Fecha o modal de opções
+      setSelectedPropForAction(null); // Fecha o modal de propriedades
     } catch (error) {
       console.error("Erro ao comprar casa!", error);
       toast.error("Erro ao comprar casa!");
@@ -147,11 +152,14 @@ export default function PlayerCard({ player }: PlayerCardProps) {
     if (!currentSession) return;
 
     try {
+      setReqLoading(true);
       await sellHouse({ userId, sessionId: currentSession.id, propriedadeId });
 
       toast.success("Casa vendida com sucesso!");
+      setReqLoading(false);
       loadSession(currentSession.id);
       setOptionsModal(false); // Fecha o modal de opções
+      setSelectedPropForAction(null); // Fecha o modal de propriedades
     } catch (error) {
       console.error("Erro ao comprar casa!", error);
       toast.error("Erro ao comprar casa!");
@@ -165,6 +173,7 @@ export default function PlayerCard({ player }: PlayerCardProps) {
     if (!currentSession) return;
 
     try {
+      setReqLoading(true);
       await sellPropriedade(propriedadeId, currentSession.id, userId);
 
       toast.success("Propriedade vendida com sucesso!");
@@ -175,6 +184,7 @@ export default function PlayerCard({ player }: PlayerCardProps) {
       setOptionsModal(false);
       setModalProps(false);
       setSelectedGroup(null);
+      setSelectedPropForAction(null); // Fecha o modal de propriedades
     } catch (error) {
       console.error("Erro ao vender propriedade!", error);
       // A mensagem de erro já é exibida pelo gameStore
@@ -188,6 +198,7 @@ export default function PlayerCard({ player }: PlayerCardProps) {
     if (!currentSession) return;
 
     try {
+      setReqLoading(true);
       await hipotecarProp(propriedadeId, currentSession.id, userId);
 
       toast.success("Propriedade hipotecada com sucesso!");
@@ -198,6 +209,7 @@ export default function PlayerCard({ player }: PlayerCardProps) {
       setOptionsModal(false);
       setModalProps(false);
       setSelectedGroup(null);
+      setSelectedPropForAction(null); // Fecha o modal de propriedades
     } catch (error) {
       console.error("Erro ao vender propriedade!", error);
       // A mensagem de erro já é exibida pelo gameStore
@@ -365,6 +377,7 @@ export default function PlayerCard({ player }: PlayerCardProps) {
       >
         <nav className="mt-4 flex flex-col gap-4">
           <button
+            disabled={!selectedPropForAction || reqLoading}
             onClick={() => {
               if (!selectedPropForAction) return;
 
@@ -397,12 +410,13 @@ export default function PlayerCard({ player }: PlayerCardProps) {
                 handleComprarCasa(selectedPropForAction.id, player.id);
               }
             }}
-            className="w-full lg:w-auto py-2 lg:px-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-colors"
+            className={`w-full lg:w-auto py-2 lg:px-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            Comprar Casa
+            {reqLoading ? "Comprando..." : "Comprar Casa"}
           </button>
 
           <button
+            disabled={!selectedPropForAction || reqLoading}
             onClick={() => {
               if (!selectedPropForAction) return;
 
@@ -424,12 +438,13 @@ export default function PlayerCard({ player }: PlayerCardProps) {
                 handleVenderCasa(selectedPropForAction.id, player.id);
               }
             }}
-            className="w-full lg:w-auto py-2 lg:px-2 bg-amber-500 text-white rounded cursor-pointer hover:bg-amber-600 transition-colors"
+            className={`w-full lg:w-auto py-2 lg:px-2 bg-amber-500 text-white rounded cursor-pointer hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            Vender Casas
+            {reqLoading ? "Vendendo..." : "Vender Casa"}
           </button>
 
           <button
+            disabled={!selectedPropForAction || reqLoading}
             onClick={() => {
               if (!selectedPropForAction) return;
 
@@ -453,12 +468,13 @@ export default function PlayerCard({ player }: PlayerCardProps) {
                 handleVenderPropriedade(selectedPropForAction.id, player.id);
               }
             }}
-            className="w-full lg:w-auto py-2 lg:px-2 bg-red-500 text-white rounded cursor-pointer hover:bg-red-600 transition-colors"
+            className={`w-full lg:w-auto py-2 lg:px-2 bg-red-500 text-white rounded cursor-pointer hover:bg-red-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            Vender Prop.
+            {reqLoading ? "Vendendo..." : "Vender Propriedade"}
           </button>
 
           <button
+            disabled={!selectedPropForAction || reqLoading}
             onClick={() => {
               if (!selectedPropForAction) return;
 
@@ -482,9 +498,9 @@ export default function PlayerCard({ player }: PlayerCardProps) {
                 handleHipotecarPropriedade(selectedPropForAction.id, player.id);
               }
             }}
-            className="w-full lg:w-auto py-2 lg:px-2 bg-indigo-500 text-white rounded cursor-pointer hover:bg-indigo-600 transition-colors"
+            className={`w-full lg:w-auto py-2 lg:px-2 bg-indigo-500 text-white rounded cursor-pointer hover:bg-indigo-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            Hipotecar
+            {reqLoading ? "Hipotecando..." : "Hipotecar"}
           </button>
         </nav>
       </Modal>
