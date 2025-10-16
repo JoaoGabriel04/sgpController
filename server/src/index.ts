@@ -6,11 +6,24 @@ import apiRouter from "./api/routes/index.js";
 const PORT = process.env.PORT || 7000;
 const app = express();
 
+const allowedOrigins = [
+  "https://sgpcontroller.netlify.app/",
+  "http://localhost:3000" // para desenvolvimento local
+];
+
 app.use(
   cors({
-    origin: "https://sgpcontroller.netlify.app/",
+    origin: function(origin, callback){
+      if(!origin || allowedOrigins.includes(origin)){
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    }
   })
 );
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

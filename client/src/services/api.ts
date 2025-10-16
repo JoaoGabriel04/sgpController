@@ -1,7 +1,7 @@
 import { GameSession, Player, PlayerColor } from "@/types/game";
 import axios from "axios";
 
-const baseURL = (process.env.NODE_ENV === "development" ? "http://localhost:7000/api" : "https://sgpcontroller.onrender.com/api")
+const baseURL = "https://sgpcontroller.onrender.com/api"
 
 const api = axios.create({
   baseURL: baseURL
