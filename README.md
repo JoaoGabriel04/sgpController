@@ -1,6 +1,6 @@
 # 📌 Super Gerenciador
 
-Esse projeto foi criado para dar mais dinâmica à função do "b"anqueiro" no jogo de tabuleiro Super Banco Imobiliário.
+Esse projeto foi criado para dar mais dinâmica à função do "banqueiro" no jogo de tabuleiro Super Banco Imobiliário.
 
 ---
 
@@ -41,10 +41,10 @@ Instruções para rodar o projeto localmente:
 
 ```bash
 # Clone este repositório
-git clone https://github.com/JoaoGabriel04/nome-do-projeto.git
+git clone https://github.com/JoaoGabriel04/sgpController
 
 # Acesse a pasta do projeto
-cd nome-do-projeto
+cd sgpController
 
 # Instale as dependências
 npm install
