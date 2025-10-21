@@ -43,7 +43,7 @@ export default function PropertyCard({ property }: PropertyProps) {
   return (
     <div className={`p-4 border border-l-8 rounded shadow-sm ${bgClass} ${borderClass}`}>
       <h3 className="font-semibold text-gray-800">{propertyData.nome}</h3>
-      <p className="text-sm text-gray-500">Preço: {property.hipotecada ? propertyData.custo_compra + 20%(propertyData.custo_compra) : propertyData.custo_compra}</p>
+      <p className="text-sm text-gray-500">Preço: {property.hipotecada ? propertyData.custo_compra + (propertyData.custo_compra * 0.2) : propertyData.custo_compra}</p>
       <p className="text-sm text-gray-500">
         Casas: {property.casas} • Hipotecada: {property.hipotecada ? "Sim" : "Não"}
       </p>
