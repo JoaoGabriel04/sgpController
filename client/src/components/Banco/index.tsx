@@ -105,7 +105,7 @@ export default function Banco() {
       return toast.error("Campos vazios ou valor inválido!");
     if (!currentSession) return;
 
-    if (valor >= 10000000) return toast.warning("Valor muito alto!")
+    if (valor >= 10000000) return toast.warning("Valor muito alto!");
 
     try {
       setReqLoading(true);
@@ -155,7 +155,13 @@ export default function Banco() {
     recebedor: number | undefined,
     valor: number
   ) {
-    if (pagador == null || recebedor == null || valor <= 0 || pagador === 0 || recebedor === 0)
+    if (
+      pagador == null ||
+      recebedor == null ||
+      valor <= 0 ||
+      pagador === 0 ||
+      recebedor === 0
+    )
       return toast.error("Campos vazios ou valor inválido!");
     if (!currentSession) return;
 
@@ -290,11 +296,13 @@ export default function Banco() {
             <SelectValue placeholder="Selecione o Jogador!" />
           </SelectTrigger>
           <SelectContent>
-            {currentSession?.jogadores.map((player) => (
-              <SelectItem key={player.id} value={String(player.id)}>
-                {player.nome}
-              </SelectItem>
-            ))}
+            {currentSession?.jogadores
+              .map((player) => (
+                <SelectItem key={player.id} value={String(player.id)}>
+                  {player.nome}
+                </SelectItem>
+              ))
+              .sort((a, b) => a.props.children.localeCompare(b.props.children))}
           </SelectContent>
         </Select>
 
@@ -338,11 +346,13 @@ export default function Banco() {
             <SelectValue placeholder="Selecione o Jogador!" />
           </SelectTrigger>
           <SelectContent>
-            {currentSession?.jogadores.map((player) => (
-              <SelectItem key={player.id} value={String(player.id)}>
-                {player.nome}
-              </SelectItem>
-            ))}
+            {currentSession?.jogadores
+              .map((player) => (
+                <SelectItem key={player.id} value={String(player.id)}>
+                  {player.nome}
+                </SelectItem>
+              ))
+              .sort((a, b) => a.props.children.localeCompare(b.props.children))}
           </SelectContent>
         </Select>
 
@@ -385,11 +395,14 @@ export default function Banco() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="0">Selecione</SelectItem>
-            {currentSession?.jogadores.map((player) => (
-              <SelectItem key={player.id} value={String(player.id)}>
-                {player.nome}
-              </SelectItem>
-            ))}
+            {currentSession?.jogadores
+              .filter((p) => p.id !== selectedPlayer2?.id)
+              .map((player) => (
+                <SelectItem key={player.id} value={String(player.id)}>
+                  {player.nome}
+                </SelectItem>
+              ))
+              .sort((a, b) => a.props.children.localeCompare(b.props.children))}
           </SelectContent>
         </Select>
 
@@ -407,11 +420,14 @@ export default function Banco() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="0">Selecione</SelectItem>
-            {currentSession?.jogadores.map((player) => (
-              <SelectItem key={player.id} value={String(player.id)}>
-                {player.nome}
-              </SelectItem>
-            ))}
+            {currentSession?.jogadores
+              .filter((p) => p.id !== selectedPlayer1?.id)
+              .map((player) => (
+                <SelectItem key={player.id} value={String(player.id)}>
+                  {player.nome}
+                </SelectItem>
+              ))
+              .sort((a, b) => a.props.children.localeCompare(b.props.children))}
           </SelectContent>
         </Select>
 
@@ -425,7 +441,12 @@ export default function Banco() {
 
         <div className="w-full flex justify-center items-center">
           <button
-            disabled={reqLoading || !selectedPlayer1 || !selectedPlayer2 || valorOperacao <= 0}
+            disabled={
+              reqLoading ||
+              !selectedPlayer1 ||
+              !selectedPlayer2 ||
+              valorOperacao <= 0
+            }
             onClick={() =>
               transferir(
                 selectedPlayer1?.id,
@@ -464,11 +485,13 @@ export default function Banco() {
             <SelectValue placeholder="Selecione o Jogador!" />
           </SelectTrigger>
           <SelectContent>
-            {currentSession?.jogadores.map((player) => (
-              <SelectItem key={player.id} value={String(player.id)}>
-                {player.nome}
-              </SelectItem>
-            ))}
+            {currentSession?.jogadores
+              .map((player) => (
+                <SelectItem key={player.id} value={String(player.id)}>
+                  {player.nome}
+                </SelectItem>
+              ))
+              .sort((a, b) => a.props.children.localeCompare(b.props.children))}
           </SelectContent>
         </Select>
 
@@ -498,7 +521,8 @@ export default function Banco() {
                     {label}
                   </SelectItem>
                 );
-              })}
+              })
+              .sort((a, b) => a.props.children.localeCompare(b.props.children))}
           </SelectContent>
         </Select>
 

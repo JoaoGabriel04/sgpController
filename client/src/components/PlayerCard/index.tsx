@@ -16,6 +16,7 @@ import { toast } from "react-toastify";
 
 interface PlayerCardProps {
   player: Player;
+  totalPropertyValue: number;
 }
 
 type ColorInfo = {
@@ -33,7 +34,7 @@ type Group = {
   properties: Propriedade[];
 };
 
-export default function PlayerCard({ player }: PlayerCardProps) {
+export default function PlayerCard({ player, totalPropertyValue }: PlayerCardProps) {
   const {
     currentSession,
     getPropertyById,
@@ -108,10 +109,6 @@ export default function PlayerCard({ player }: PlayerCardProps) {
       style: "currency",
       currency: "BRL",
     }).format(value);
-
-  const totalPropertyValue = Object.values(propertiesByColor)
-    .flatMap((g) => g.properties)
-    .reduce((acc, p) => acc + p.custo_compra, 0);
 
   const totalGroupsComplete = Object.values(propertiesByColor).filter(
     (group) => {

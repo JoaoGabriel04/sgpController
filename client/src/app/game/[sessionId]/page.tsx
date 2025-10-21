@@ -12,12 +12,14 @@ import { toast } from "react-toastify";
 import Historico from "@/components/Historico";
 import Modal from "@/components/Modal";
 import Link from "next/link";
+import Loading from "@/components/Loading";
 
 const linksNav = ["Início", "Banco", "Propriedades", "Especiais", "Histórico"];
 
 export default function Game() {
   const [abaAtual, setAbaAtual] = useState("Início");
   const [fetched, setFetched] = useState(false);
+  const [endLoading, setEndLoading] = useState(false);
 
   const params = useParams();
   const router = useRouter();
@@ -74,8 +76,10 @@ export default function Game() {
       )
     )
       return;
+    setEndLoading(true);
     await endSession(currentSession.id);
     toast.success("Jogo finalizado!");
+    setEndLoading(false);
     router.push("/");
   };
 
@@ -181,6 +185,10 @@ export default function Game() {
           ))}
         </ul>
       </Modal>
+
+      {endLoading && (
+        <Loading label="Finalizando..."/>
+      )}
     </main>
   );
 }

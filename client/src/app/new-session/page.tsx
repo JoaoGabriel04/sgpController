@@ -1,10 +1,12 @@
 "use client";
 import ColorDropdown from "@/components/ColorDropdown";
+import Loading from "@/components/Loading";
 import { useGameStore } from "@/stores/gameStore";
 import {
   INITIAL_BALANCE,
   MAX_PLAYERS,
   MIN_PLAYERS,
+  PLAYER_COLORS,
   PlayerColor,
 } from "@/types/game";
 import { ArrowLeft, GamepadIcon, Minus, Plus, Users } from "lucide-react";
@@ -220,16 +222,21 @@ export default function NewSession() {
             </p>
 
             <div className="space-y-6">
-              {Array.from({ length: numPlayers }).map((_, index) => (
-                <div
-                  key={index}
-                  className="p-4 border border-gray-200 rounded-lg"
-                >
-                  <h3 className="font-semibold text-gray-900 mb-4">
-                    Jogador {index + 1}
-                  </h3>
+              {Array.from({ length: numPlayers }).map((_, index) => {
+                const playerColorInfo = players[index]?.cor
+                  ? PLAYER_COLORS.find((c) => c.value === players[index].cor)
+                  : null;
 
-                  <div className="grid md:grid-cols-2 gap-4">
+                return (
+                  <div
+                    key={index}
+                    className="p-4 border border-gray-200 rounded-lg"
+                  >
+                    <h3 className="font-semibold text-gray-900 mb-4">
+                      Jogador {index + 1}
+                    </h3>
+
+                    <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Nome
@@ -258,36 +265,37 @@ export default function NewSession() {
                         placeholder="Selecione uma cor"
                       />
                     </div>
-                  </div>
+                    </div>
 
-                  {/* Preview do jogador */}
-                  {players[index]?.nome && players[index]?.cor && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center">
-                        <div
-                          className={`w-8 h-8 rounded-full bg-${players[index].cor}-500 mr-3 flex items-center justify-center`}
-                        >
-                          <span className="text-white text-sm font-bold">
-                            {players[index].nome.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {players[index].nome}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Saldo inicial:{" "}
-                            {new Intl.NumberFormat("pt-BR", {
-                              style: "currency",
-                              currency: "BRL",
-                            }).format(INITIAL_BALANCE)}
-                          </p>
+                    {/* Preview do jogador */}
+                    {players[index]?.nome && playerColorInfo && (
+                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center">
+                          <div
+                            className={`w-8 h-8 rounded-full ${playerColorInfo.bg} mr-3 flex items-center justify-center`}
+                          >
+                            <span className="text-white text-sm font-bold">
+                              {players[index].nome.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {players[index].nome}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Saldo inicial:{" "}
+                              {new Intl.NumberFormat("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                              }).format(INITIAL_BALANCE)}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -330,12 +338,7 @@ export default function NewSession() {
         </div>
       </div>
       {reqLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 flex items-center space-x-4 shadow-lg">
-            <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-8 w-8"></div>
-            <span className="text-gray-900 font-medium">Criando sessão...</span>
-          </div>
-        </div>
+        <Loading label="Carregando..."/>
       )}
     </div>
   );

@@ -204,7 +204,7 @@ export default function Especiais() {
                 <SelectItem key={player.id} value={String(player.id)}>
                   {player.nome}
                 </SelectItem>
-              ))}
+              )).sort((a, b) => a.props.children.localeCompare(b.props.children))}
           </SelectContent>
         </Select>
 
@@ -230,7 +230,7 @@ export default function Especiais() {
                 <SelectItem key={player.id} value={String(player.id)}>
                   {player.nome}
                 </SelectItem>
-              ))}
+              )).sort((a, b) => a.props.children.localeCompare(b.props.children))}
           </SelectContent>
         </Select>
 
@@ -261,7 +261,7 @@ export default function Especiais() {
                     {label}
                   </SelectItem>
                 );
-              })}
+              }).sort((a, b) => a.props.children.localeCompare(b.props.children))}
           </SelectContent>
         </Select>
 
@@ -336,7 +336,7 @@ export default function Especiais() {
                 <SelectItem key={player.id} value={String(player.id)}>
                   {player.nome}
                 </SelectItem>
-              ))}
+              )).sort((a, b) => a.props.children.localeCompare(b.props.children))}
           </SelectContent>
         </Select>
 
