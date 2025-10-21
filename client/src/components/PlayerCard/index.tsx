@@ -59,25 +59,28 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
 
   const playerColor = PLAYER_COLORS.find((color) => color.value === player.cor);
   
-  // 🔁 Atualiza propriedades do jogador
-  const atualizarPropriedadesDoJogador = useCallback(async () => {
-      if (!currentSession) return;
-    
+  // 🔄 Efeito principal para agrupar propriedades e atualizar o modal
+  useEffect(() => {
+    if (!currentSession) return;
+ 
+    const groupProperties = async () => {
       const playerProperties = currentSession.sessionPosses.filter(
         (p) => p.playerId === player.id
       );
-    
+ 
       const grouped: Record<string, Group> = {};
-    
-      for (const prop of playerProperties) { 
-        const propData: Propriedade | null = await getPropertyById(prop.possesId);
+ 
+      for (const prop of playerProperties) {
+        const propData: Propriedade | null = await getPropertyById(
+          prop.possesId
+        );
         if (!propData) continue;
-    
+ 
         const colorInfo = PROPERTY_COLORS.find(
           (c) => c.value === propData.grupo_cor
         );
         if (!colorInfo) continue;
-    
+ 
         if (!grouped[colorInfo.value]) {
           grouped[colorInfo.value] = {
             color: colorInfo,
@@ -85,26 +88,21 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
             sessionPosses: [],
           };
         }
-    
+ 
         grouped[colorInfo.value].properties.push(propData);
         grouped[colorInfo.value].sessionPosses.push(prop);
       }
-    
       setPropertiesByColor(grouped);
-    
-      // Se um grupo estiver selecionado, atualiza seus dados para refletir no modal aberto.
-      if (selectedGroup) {
-        setSelectedGroup(grouped[selectedGroup.color.value] || null);
-      }
-    },
-    [currentSession, getPropertyById, player.id, selectedGroup, setSelectedGroup]
-  );
-  
-  // 🔄 Recarrega sempre que a sessão mudar
-  useEffect(() => {
-    if (!currentSession) return;
-    atualizarPropriedadesDoJogador();
-  }, [currentSession, atualizarPropriedadesDoJogador]);
+ 
+      // Atualiza o grupo selecionado (se o modal estiver aberto) com os novos dados
+      setSelectedGroup(
+        (currentGroup) =>
+          currentGroup ? grouped[currentGroup.color.value] || null : null
+      );
+    };
+ 
+    groupProperties();
+  }, [currentSession, getPropertyById, player.id]);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", {
@@ -127,41 +125,38 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
     setModalProps(true);
   }
 
+  // Funções de Ação
   async function handleComprarCasa(propriedadeId: number, userId: number) {
-    if (!propriedadeId || !userId || !selectedGroup?.color) return;
     if (!currentSession) return;
-
+    setReqLoading(true);
     try {
-      setReqLoading(true);
       await buyHouse({ userId, sessionId: currentSession.id, propriedadeId });
-
       toast.success("Casa comprada com sucesso!");
-      setReqLoading(false);
       loadSession(currentSession.id);
       setOptionsModal(false); // Fecha o modal de opções
       setSelectedPropForAction(null); // Fecha o modal de propriedades
     } catch (error) {
       console.error("Erro ao comprar casa!", error);
       toast.error("Erro ao comprar casa!");
+    } finally {
+      setReqLoading(false);
     }
   }
 
   async function handleVenderCasa(propriedadeId: number, userId: number) {
-    if (!propriedadeId || !userId || !selectedGroup?.color) return;
     if (!currentSession) return;
-
+    setReqLoading(true);
     try {
-      setReqLoading(true);
       await sellHouse({ userId, sessionId: currentSession.id, propriedadeId });
-
       toast.success("Casa vendida com sucesso!");
-      setReqLoading(false);
       loadSession(currentSession.id);
       setOptionsModal(false); // Fecha o modal de opções
       setSelectedPropForAction(null); // Fecha o modal de propriedades
     } catch (error) {
       console.error("Erro ao comprar casa!", error);
       toast.error("Erro ao comprar casa!");
+    } finally {
+      setReqLoading(false);
     }
   }
 
@@ -170,23 +165,20 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
     userId: number
   ) {
     if (!currentSession) return;
-
+    setReqLoading(true);
     try {
-      setReqLoading(true);
       await sellPropriedade(propriedadeId, currentSession.id, userId);
-  
       toast.success("Propriedade vendida com sucesso!");
       await loadSession(currentSession.id);
-      // A atualização será reativa via `useEffect` que depende de `currentSession`
 
-      // Fecha todos os modais relevantes
       setOptionsModal(false);
       setModalProps(false);
       setSelectedGroup(null);
-      setSelectedPropForAction(null); // Fecha o modal de propriedades
+      setSelectedPropForAction(null);
     } catch (error) {
       console.error("Erro ao vender propriedade!", error);
-      // A mensagem de erro pode já ser exibida pelo gameStore
+    } finally {
+      setReqLoading(false);
     }
   }
 
@@ -195,23 +187,20 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
     userId: number
   ) {
     if (!currentSession) return;
-
+    setReqLoading(true);
     try {
-      setReqLoading(true);
       await hipotecarProp(propriedadeId, currentSession.id, userId);
-  
       toast.success("Propriedade hipotecada com sucesso!");
       await loadSession(currentSession.id);
-      // A atualização será reativa via `useEffect` que depende de `currentSession`
 
-      // Fecha todos os modais relevantes
       setOptionsModal(false);
       setModalProps(false);
       setSelectedGroup(null);
-      setSelectedPropForAction(null); // Fecha o modal de propriedades
+      setSelectedPropForAction(null);
     } catch (error) {
       console.error("Erro ao vender propriedade!", error);
-      // A mensagem de erro pode já ser exibida pelo gameStore
+    } finally {
+      setReqLoading(false);
     }
   }
 
@@ -457,8 +446,7 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
                 return;
               }
 
-              if (
-                confirm(
+              if (window.confirm(
                   `Tem certeza que deseja vender "${
                     selectedPropForAction.nome
                   }" por ${formatCurrency(selectedPropForAction.hipoteca)}?`
@@ -488,7 +476,7 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
               }
 
               if (
-                confirm(
+                window.confirm(
                   `Tem certeza que deseja hipotecar "${
                     selectedPropForAction.nome
                   }" por ${formatCurrency(selectedPropForAction.hipoteca)}?`
