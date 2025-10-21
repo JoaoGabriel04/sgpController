@@ -35,6 +35,7 @@ interface GameStore {
   sessions: GameSession[];
   currentSession: GameSession | null;
   loading: boolean;
+  networkError: boolean; // 1. Novo estado para controlar o erro de rede
   error: string | null;
   propertiesCache: Record<number, Propriedade>;
 
@@ -127,6 +128,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   sessions: [],
   currentSession: null,
   loading: false,
+  networkError: false, // 2. Inicializa como falso
   error: null,
   propertiesCache: {},
 
@@ -145,7 +147,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return newSession.id;
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       } else {
         set({ error: "Erro desconhecido", loading: false });
@@ -160,7 +162,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ sessions, loading: false });
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       } else {
         set({ error: "Erro desconhecido", loading: false });
@@ -170,19 +172,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   loadSession: async (sessionId) => {
     set({ loading: true, error: null });
+    const { networkError } = get();
+
     try {
       const session = await loadSessionApi(sessionId);
       // Não limpa o cache de propriedades aqui. Apenas atualiza a sessão.
       // O cache só será limpo se a sessão carregada for diferente da atual.
       if (get().currentSession?.id !== session.id) {
-        set({ currentSession: session, loading: false, propertiesCache: {} });
+        set({
+          currentSession: session,
+          loading: false,
+          propertiesCache: {},
+          networkError: false,
+        });
       } else {
-        set({ currentSession: session, loading: false });
+        set({ currentSession: session, loading: false, networkError: false });
       }
+      // 3. Se a chamada for bem-sucedida, reseta o estado de erro
+      if (networkError) set({ networkError: false });
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
-        set({ error: err.message, loading: false });
+        // 4. Só mostra o toast se ainda não houver um erro de rede ativo
+        if (!networkError) {
+          toast.error("Erro de conexão. Tentando reconectar...");
+        }
+        set({ error: err.message, loading: false, networkError: true });
       } else {
         set({ error: "Erro desconhecido", loading: false });
       }
@@ -200,7 +214,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }));
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       } else {
         set({ error: "Erro desconhecido", loading: false });
@@ -215,7 +229,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return player;
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
@@ -242,7 +256,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }));
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       } else {
         set({ error: "Erro desconhecido", loading: false });
@@ -270,7 +284,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }));
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       } else {
         set({ error: "Erro desconhecido", loading: false });
@@ -292,14 +306,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (propriedade) {
         // 3. Armazena no cache e retorna
         set((state) => ({
-          propertiesCache: { ...state.propertiesCache, [propriedadeId]: propriedade },
+          propertiesCache: {
+            ...state.propertiesCache,
+            [propriedadeId]: propriedade,
+          },
           loading: false,
         }));
       }
       return propriedade;
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
       }
       set({ error: (err as Error).message, loading: false });
       return null;
@@ -319,35 +336,43 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ loading: false });
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
   },
 
-  sellPropriedade: async (propriedadeId: number, sessionId: number, userId: number) => {
+  sellPropriedade: async (
+    propriedadeId: number,
+    sessionId: number,
+    userId: number
+  ) => {
     set({ loading: true, error: null });
     try {
       await sellPropriedadeApi(propriedadeId, sessionId, userId);
       await get().loadSession(sessionId);
       set({ loading: false });
-    } catch (err: unknown){
+    } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
   },
 
-  hipotecarProp: async (propriedadeId: number, sessionId: number, userId: number) => {
+  hipotecarProp: async (
+    propriedadeId: number,
+    sessionId: number,
+    userId: number
+  ) => {
     set({ loading: true, error: null });
     try {
       await hipotecarPropApi(propriedadeId, sessionId, userId);
       await get().loadSession(sessionId);
       set({ loading: false });
-    } catch (err: unknown){
+    } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
@@ -361,7 +386,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ loading: false });
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
@@ -375,7 +400,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ loading: false });
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
@@ -411,7 +436,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ loading: false });
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
@@ -425,7 +450,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ loading: false });
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
@@ -439,7 +464,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ loading: false });
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
@@ -453,7 +478,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ loading: false });
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
@@ -462,18 +487,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   aluguelAcao: async ({ sessionId, pagadorId, sessionPossesId, numDados }) => {
     set({ loading: true, error: null });
     try {
-
       await aluguelAcaoApi(sessionId, pagadorId, sessionPossesId, numDados);
       await get().loadSession(sessionId);
       set({ loading: false });
-
-    } catch(err: unknown){
+    } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
-  
   },
 
   trocaPropriedades: async ({ propriedadeId, sessionId, userId }) => {
@@ -484,23 +506,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ loading: false });
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
   },
 
   receberDeTodos: async ({ sessionId, userId }) => {
-    set({ loading: true, error: null })
+    set({ loading: true, error: null });
     try {
-      await receberDeTodosApi(sessionId, userId)
-      await get().loadSession(sessionId)
-      set({ loading: false })
+      await receberDeTodosApi(sessionId, userId);
+      await get().loadSession(sessionId);
+      set({ loading: false });
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
-        toast.error(err.message)
+        toast.error(err.message);
         set({ error: err.message, loading: false });
       }
     }
-  }
+  },
 }));
