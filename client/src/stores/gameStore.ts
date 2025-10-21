@@ -4,7 +4,6 @@ import {
   createSessionApi,
   editPlayerApi,
   endSessionApi,
-  getHistoricoApi,
   getPlayerByIdApi,
   getPropByIdApi,
   getSessionsApi,
@@ -27,7 +26,6 @@ import {
   PLAYER_COLORS,
   PlayerColor,
   Propriedade,
-  Transacao,
 } from "@/types/game";
 import { AxiosError } from "axios";
 import { toast } from "react-toastify";
@@ -38,6 +36,7 @@ interface GameStore {
   currentSession: GameSession | null;
   loading: boolean;
   error: string | null;
+  propertiesCache: Record<number, Propriedade>;
 
   createSession: (
     players: { nome: string; cor: PlayerColor }[]
@@ -80,8 +79,6 @@ interface GameStore {
     sessionId: number,
     userId: number
   ) => Promise<void>;
-
-  getHistorico: (sessionId: number) => Promise<Transacao[] | null>;
 
   getAvailableColors: (excludePlayerId?: number) => PlayerColor[];
   getAluguel: (propriedade: Propriedade, casas: number) => number;
@@ -131,6 +128,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   currentSession: null,
   loading: false,
   error: null,
+  propertiesCache: {},
 
   createSession: async (players) => {
     set({ loading: true, error: null });
@@ -141,6 +139,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set((state) => ({
         sessions: [...state.sessions, newSession],
         currentSession: newSession,
+        propertiesCache: {}, // Limpa o cache para a nova sessão
         loading: false,
       }));
       return newSession.id;
@@ -173,7 +172,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const session = await loadSessionApi(sessionId);
-      set({ currentSession: session, loading: false });
+      // Não limpa o cache de propriedades aqui. Apenas atualiza a sessão.
+      // O cache só será limpo se a sessão carregada for diferente da atual.
+      if (get().currentSession?.id !== session.id) {
+        set({ currentSession: session, loading: false, propertiesCache: {} });
+      } else {
+        set({ currentSession: session, loading: false });
+      }
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
         toast.error(err.message)
@@ -274,16 +279,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   getPropertyById: async (propriedadeId: number) => {
-    set({ loading: true, error: null });
+    const { propertiesCache } = get();
+    // 1. Verifica se a propriedade já está no cache
+    if (propertiesCache[propriedadeId]) {
+      return propertiesCache[propriedadeId];
+    }
+
+    // 2. Se não estiver, busca na API
     try {
+      set({ loading: true, error: null });
       const propriedade = await getPropByIdApi(propriedadeId);
-      set({ loading: false });
+      if (propriedade) {
+        // 3. Armazena no cache e retorna
+        set((state) => ({
+          propertiesCache: { ...state.propertiesCache, [propriedadeId]: propriedade },
+          loading: false,
+        }));
+      }
       return propriedade;
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
         toast.error(err.message)
-        set({ error: err.message, loading: false });
       }
+      set({ error: (err as Error).message, loading: false });
+      return null;
     }
   },
 
@@ -354,21 +373,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       await sellHouseApi(userId, sessionId, propriedadeId);
       await get().loadSession(sessionId);
       set({ loading: false });
-    } catch (err: unknown) {
-      if (err instanceof AxiosError) {
-        toast.error(err.message)
-        set({ error: err.message, loading: false });
-      }
-    }
-  },
-
-  getHistorico: async (sessionId: number) => {
-    set({ loading: true, error: null });
-    try {
-      const historico = await getHistoricoApi(sessionId);
-      await get().loadSession(sessionId);
-      set({ loading: false });
-      return historico;
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
         toast.error(err.message)

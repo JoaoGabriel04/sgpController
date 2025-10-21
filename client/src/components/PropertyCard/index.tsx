@@ -1,8 +1,7 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useGameStore } from "@/stores/gameStore";
-import { SessionPropriedade, Propriedade, PROPERTY_COLORS } from "@/types/game";
-import { toast } from "react-toastify";
+import { SessionPropriedade, PROPERTY_COLORS } from "@/types/game";
 
 interface PropertyProps {
   property: SessionPropriedade;
@@ -10,38 +9,33 @@ interface PropertyProps {
 
 export default function PropertyCard({ property }: PropertyProps) {
   const { getPropertyById } = useGameStore();
-  const [propertyData, setPropertyData] = useState<Propriedade | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const propertyData = useGameStore(
+    (state) => state.propertiesCache[property.possesId]
+  );
 
   useEffect(() => {
     if (!property?.possesId) return;
 
-    const fetchProperty = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await getPropertyById(property.possesId);
-        setPropertyData(data ?? null);
-      } catch (err: unknown) {
-        console.log("Erro ao carregar propriedade: ", err);
-        toast.error("Erro ao carregar propriedade")
-        setError("Erro ao carregar propriedade");
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Se a propriedade não estiver no cache, a função getPropertyById a buscará.
+    // O componente será re-renderizado quando o cache for atualizado.
+    if (!propertyData) {
+      getPropertyById(property.possesId);
+    }
+  }, [property?.possesId, getPropertyById, propertyData]);
 
-    fetchProperty();
-  }, [property?.possesId, getPropertyById]);
+  const colorInfo = useMemo(() => {
+    if (!propertyData) return null;
+    return PROPERTY_COLORS.find((c) => c.value === propertyData.grupo_cor);
+  }, [propertyData]);
 
-  if (loading) return <div>Carregando...</div>;
-  if (error) return <div>{error}</div>;
-  if (!propertyData) return <div>Propriedade não encontrada</div>;
-
-  const colorInfo = PROPERTY_COLORS.find(
-    (c) => c.value === propertyData.grupo_cor
-  );
+  if (!propertyData || !colorInfo) {
+    return (
+      <div className="p-4 border border-l-8 rounded shadow-sm bg-gray-100 border-gray-300 animate-pulse h-[98px]">
+        <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+      </div>
+    );
+  }
 
   const borderClass = colorInfo?.border ?? "border-gray-300";
   const bgClass = colorInfo?.bg ?? "bg-gray-100";

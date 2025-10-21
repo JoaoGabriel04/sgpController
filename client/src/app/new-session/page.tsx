@@ -72,6 +72,9 @@ export default function NewSession() {
       "yellow",
       "purple",
       "black",
+      "orange",
+      "pink",
+      "emerald"
     ];
 
     return allColors.filter((color) => !usedColors.includes(color));
@@ -326,6 +329,14 @@ export default function NewSession() {
           </div>
         </div>
       </div>
+      {reqLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 flex items-center space-x-4 shadow-lg">
+            <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-8 w-8"></div>
+            <span className="text-gray-900 font-medium">Criando sessão...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,30 +1,22 @@
 "use client";
 
 import { useGameStore } from "@/stores/gameStore";
-import { Transacao } from "@/types/game";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 
 export default function Historico() {
-  const { currentSession, getHistorico } = useGameStore();
+  const { currentSession } = useGameStore();
 
-  const [historico, setHistorico] = useState<Transacao[] | null>(null);
-
-  useEffect(() => {
-    if (!currentSession) return;
-    (async () => {
-      const res = await getHistorico(currentSession.id);
-      if (res) {
-        // ordena crescente por id antes de salvar
-        const ordered = res.slice().sort((a, b) => a.id - b.id);
-        setHistorico(ordered);
-      }
-    })();
-  }, [currentSession, getHistorico]);
+  // Lê o histórico diretamente da sessão e memoriza a ordenação
+  const historicoOrdenado = useMemo(() => {
+    if (!currentSession?.historico) return [];
+    // Cria uma cópia e ordena de forma decrescente para mostrar os mais recentes primeiro
+    return [...currentSession.historico].sort((a, b) => b.id - a.id);
+  }, [currentSession?.historico]);
 
   return (
     <main>
-      {historico && historico.length > 0 ? (
+      {historicoOrdenado.length > 0 ? (
         <Table>
           <TableCaption>Histórico de Transações</TableCaption>
           <TableHeader>
@@ -36,7 +28,7 @@ export default function Historico() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {historico.map((transacao) => (
+            {historicoOrdenado.map((transacao) => (
               <TableRow key={transacao.id}>
                 <TableCell className="font-medium">{transacao.id}</TableCell>
                 <TableCell>{transacao.tipo}</TableCell>

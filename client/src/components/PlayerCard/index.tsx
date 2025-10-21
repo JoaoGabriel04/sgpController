@@ -57,26 +57,26 @@ export default function PlayerCard({ player }: PlayerCardProps) {
   const [reqLoading, setReqLoading] = useState(false);
 
   const playerColor = PLAYER_COLORS.find((color) => color.value === player.cor);
-
+  
   // 🔁 Atualiza propriedades do jogador
   const atualizarPropriedadesDoJogador = async () => {
     if (!currentSession) return;
-
+  
     const playerProperties = currentSession.sessionPosses.filter(
       (p) => p.playerId === player.id
     );
-
+  
     const grouped: Record<string, Group> = {};
-
-    for (const prop of playerProperties) {
+  
+    for (const prop of playerProperties) { 
       const propData: Propriedade | null = await getPropertyById(prop.possesId);
       if (!propData) continue;
-
+  
       const colorInfo = PROPERTY_COLORS.find(
         (c) => c.value === propData.grupo_cor
       );
       if (!colorInfo) continue;
-
+  
       if (!grouped[colorInfo.value]) {
         grouped[colorInfo.value] = {
           color: colorInfo,
@@ -84,19 +84,19 @@ export default function PlayerCard({ player }: PlayerCardProps) {
           sessionPosses: [],
         };
       }
-
+  
       grouped[colorInfo.value].properties.push(propData);
       grouped[colorInfo.value].sessionPosses.push(prop);
     }
-
+  
     setPropertiesByColor(grouped);
-
+  
     // Se um grupo estiver selecionado, atualiza seus dados para refletir no modal aberto.
     if (selectedGroup) {
       setSelectedGroup(grouped[selectedGroup.color.value] || null);
     }
   };
-
+  
   // 🔄 Recarrega sempre que a sessão mudar
   useEffect(() => {
     if (!currentSession) return;
@@ -175,10 +175,10 @@ export default function PlayerCard({ player }: PlayerCardProps) {
     try {
       setReqLoading(true);
       await sellPropriedade(propriedadeId, currentSession.id, userId);
-
+  
       toast.success("Propriedade vendida com sucesso!");
       await loadSession(currentSession.id);
-      await atualizarPropriedadesDoJogador();
+      // A atualização será reativa via `useEffect` que depende de `currentSession`
 
       // Fecha todos os modais relevantes
       setOptionsModal(false);
@@ -187,7 +187,7 @@ export default function PlayerCard({ player }: PlayerCardProps) {
       setSelectedPropForAction(null); // Fecha o modal de propriedades
     } catch (error) {
       console.error("Erro ao vender propriedade!", error);
-      // A mensagem de erro já é exibida pelo gameStore
+      // A mensagem de erro pode já ser exibida pelo gameStore
     }
   }
 
@@ -200,10 +200,10 @@ export default function PlayerCard({ player }: PlayerCardProps) {
     try {
       setReqLoading(true);
       await hipotecarProp(propriedadeId, currentSession.id, userId);
-
+  
       toast.success("Propriedade hipotecada com sucesso!");
       await loadSession(currentSession.id);
-      await atualizarPropriedadesDoJogador();
+      // A atualização será reativa via `useEffect` que depende de `currentSession`
 
       // Fecha todos os modais relevantes
       setOptionsModal(false);
@@ -212,7 +212,7 @@ export default function PlayerCard({ player }: PlayerCardProps) {
       setSelectedPropForAction(null); // Fecha o modal de propriedades
     } catch (error) {
       console.error("Erro ao vender propriedade!", error);
-      // A mensagem de erro já é exibida pelo gameStore
+      // A mensagem de erro pode já ser exibida pelo gameStore
     }
   }
 

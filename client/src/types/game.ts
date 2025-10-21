@@ -79,14 +79,20 @@ export type PlayerColor =
   | 'yellow' 
   | 'purple' 
   | 'black'
+  | 'orange'
+  | 'pink'
+  | 'emerald'
 
-export const PLAYER_COLORS: { value: PlayerColor; label: string; bg: string; text: string }[] = [
-  { value: 'red', label: 'Vermelho', bg: 'bg-red-500', text: 'text-red-500' },
-  { value: 'blue', label: 'Azul', bg: 'bg-blue-500', text: 'text-blue-500' },
-  { value: 'green', label: 'Verde', bg: 'bg-green-500', text: 'text-green-500' },
-  { value: 'yellow', label: 'Amarelo', bg: 'bg-yellow-500', text: 'text-yellow-500' },
-  { value: 'purple', label: 'Roxo', bg: 'bg-purple-500', text: 'text-purple-500' },
-  { value: 'black', label: 'Preto', bg: 'bg-black', text: 'text-black' },
+export const PLAYER_COLORS: { value: PlayerColor; label: string; bg: string; border: string; text: string }[] = [
+  { value: 'red', label: 'Vermelho', bg: 'bg-red-500', border: 'border-red-500', text: 'text-red-500' },
+  { value: 'blue', label: 'Azul', bg: 'bg-blue-500', border: 'border-blue-500', text: 'text-blue-500' },
+  { value: 'green', label: 'Verde', bg: 'bg-green-500', border: 'border-green-500', text: 'text-green-500' },
+  { value: 'yellow', label: 'Amarelo', bg: 'bg-yellow-500', border: 'border-yellow-500', text: 'text-yellow-500' },
+  { value: 'purple', label: 'Roxo', bg: 'bg-purple-500', border: 'border-purple-500', text: 'text-purple-500' },
+  { value: 'black', label: 'Preto', bg: 'bg-black', border: 'border-black', text: 'text-black' },
+  { value: 'orange', label: 'Laranja', bg: 'bg-orange-500', border: 'border-orange-500', text: 'text-orange-500' },
+  { value: 'pink', label: 'Rosa', bg: 'bg-pink-500', border: 'border-pink-500', text: 'text-pink-500' },
+  { value: 'emerald', label: 'Esmeralda', bg: 'bg-emerald-500', border: 'border-emerald-500', text: 'text-emerald-500' },
 ];
 
 // ========================
