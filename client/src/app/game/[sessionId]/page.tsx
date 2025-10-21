@@ -63,6 +63,7 @@ export default function Game() {
   useEffect(() => {
     if (!fetched) return; // espera o fetch terminar
     if (!currentSession) {
+      if(endLoading) return;
       toast.error("Sessão não encontrada");
       router.push("/");
     }
