@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useGameStore } from "@/stores/gameStore";
 import PlayerCard from "../PlayerCard";
 import { Player, Propriedade } from "@/types/game";
-
+import { useCallback } from "react";
 interface PlayerWithNetWorth extends Player {
   netWorth: number;
 }
@@ -13,26 +13,29 @@ export default function Inicio() {
   const { currentSession, getPropertyById } = useGameStore();
   const [sortedPlayers, setSortedPlayers] = useState<PlayerWithNetWorth[]>([]);
 
-  const calculateNetWorth = async (player: Player): Promise<number> => {
-    if (!currentSession) return player.saldo;
+  const calculateNetWorth = useCallback(
+    async (player: Player): Promise<number> => {
+      if (!currentSession) return player.saldo;
 
-    const playerProperties = currentSession.sessionPosses.filter(
-      (p) => p.playerId === player.id
-    );
-
-    let propertyValue = 0;
-    for (const sessionProp of playerProperties) {
-      const propData: Propriedade | null = await getPropertyById(
-        sessionProp.possesId
+      const playerProperties = currentSession.sessionPosses.filter(
+        (p) => p.playerId === player.id
       );
-      if (propData) {
-        propertyValue += propData.hipoteca;
-        propertyValue += sessionProp.casas * propData.custo_casa;
-      }
-    }
 
-    return player.saldo + propertyValue;
-  };
+      let propertyValue = 0;
+      for (const sessionProp of playerProperties) {
+        const propData: Propriedade | null = await getPropertyById(
+          sessionProp.possesId
+        );
+        if (propData) {
+          propertyValue += propData.hipoteca;
+          propertyValue += sessionProp.casas * propData.custo_casa;
+        }
+      }
+
+      return player.saldo + propertyValue;
+    },
+    [currentSession, getPropertyById]
+  );
 
   useEffect(() => {
     const sortPlayers = async () => {
@@ -53,7 +56,7 @@ export default function Inicio() {
     };
 
     sortPlayers();
-  }, [currentSession]);
+  }, [currentSession, calculateNetWorth]);
 
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

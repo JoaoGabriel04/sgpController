@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DollarSign } from "lucide-react";
 import {
   Player,
@@ -60,49 +60,51 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
   const playerColor = PLAYER_COLORS.find((color) => color.value === player.cor);
   
   // 🔁 Atualiza propriedades do jogador
-  const atualizarPropriedadesDoJogador = async () => {
-    if (!currentSession) return;
-  
-    const playerProperties = currentSession.sessionPosses.filter(
-      (p) => p.playerId === player.id
-    );
-  
-    const grouped: Record<string, Group> = {};
-  
-    for (const prop of playerProperties) { 
-      const propData: Propriedade | null = await getPropertyById(prop.possesId);
-      if (!propData) continue;
-  
-      const colorInfo = PROPERTY_COLORS.find(
-        (c) => c.value === propData.grupo_cor
+  const atualizarPropriedadesDoJogador = useCallback(async () => {
+      if (!currentSession) return;
+    
+      const playerProperties = currentSession.sessionPosses.filter(
+        (p) => p.playerId === player.id
       );
-      if (!colorInfo) continue;
-  
-      if (!grouped[colorInfo.value]) {
-        grouped[colorInfo.value] = {
-          color: colorInfo,
-          properties: [],
-          sessionPosses: [],
-        };
+    
+      const grouped: Record<string, Group> = {};
+    
+      for (const prop of playerProperties) { 
+        const propData: Propriedade | null = await getPropertyById(prop.possesId);
+        if (!propData) continue;
+    
+        const colorInfo = PROPERTY_COLORS.find(
+          (c) => c.value === propData.grupo_cor
+        );
+        if (!colorInfo) continue;
+    
+        if (!grouped[colorInfo.value]) {
+          grouped[colorInfo.value] = {
+            color: colorInfo,
+            properties: [],
+            sessionPosses: [],
+          };
+        }
+    
+        grouped[colorInfo.value].properties.push(propData);
+        grouped[colorInfo.value].sessionPosses.push(prop);
       }
-  
-      grouped[colorInfo.value].properties.push(propData);
-      grouped[colorInfo.value].sessionPosses.push(prop);
-    }
-  
-    setPropertiesByColor(grouped);
-  
-    // Se um grupo estiver selecionado, atualiza seus dados para refletir no modal aberto.
-    if (selectedGroup) {
-      setSelectedGroup(grouped[selectedGroup.color.value] || null);
-    }
-  };
+    
+      setPropertiesByColor(grouped);
+    
+      // Se um grupo estiver selecionado, atualiza seus dados para refletir no modal aberto.
+      if (selectedGroup) {
+        setSelectedGroup(grouped[selectedGroup.color.value] || null);
+      }
+    },
+    [currentSession, getPropertyById, player.id, selectedGroup, setSelectedGroup]
+  );
   
   // 🔄 Recarrega sempre que a sessão mudar
   useEffect(() => {
     if (!currentSession) return;
     atualizarPropriedadesDoJogador();
-  }, [currentSession]);
+  }, [currentSession, atualizarPropriedadesDoJogador]);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", {

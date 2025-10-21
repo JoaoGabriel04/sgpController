@@ -67,7 +67,7 @@ export default function Game() {
       toast.error("Sessão não encontrada");
       router.push("/");
     }
-  }, [fetched, currentSession, router]);
+  }, [fetched, currentSession, router, endLoading]);
 
   const handleEndGame = async () => {
     if (!currentSession) return;

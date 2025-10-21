@@ -1,7 +1,5 @@
 import type {Request, Response} from "express"
-import {PrismaClient} from '@prisma/client'
-
-const prisma = new PrismaClient();
+import { prisma } from "../../lib/prisma.js";
 
 const bancoController = {
   test: (req: Request, res: Response) => {
