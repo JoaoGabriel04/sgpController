@@ -63,7 +63,7 @@ export default function Game() {
   useEffect(() => {
     if (!fetched) return; // espera o fetch terminar
     if (!currentSession) {
-      if(endLoading) return;
+      if (endLoading) return;
       toast.error("Sessão não encontrada");
       router.push("/");
     }
@@ -83,6 +83,16 @@ export default function Game() {
     setEndLoading(false);
     router.push("/");
   };
+
+  function formatDate(timestamp: number) {
+    return new Date(timestamp).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 
   const renderConteudo = () => {
     switch (abaAtual) {
@@ -115,7 +125,10 @@ export default function Game() {
   return (
     <main className="w-full flex flex-col px-4 pb-6">
       <header className="w-full py-2 flex flex-col items-center">
-        <Link href={"/"} className="mt-4 text-4xl font-bold bg-linear-to-r from-blue-800 to-purple-700 bg-clip-text text-transparent">
+        <Link
+          href={"/"}
+          className="mt-4 text-4xl font-bold bg-linear-to-r from-blue-800 to-purple-700 bg-clip-text text-transparent"
+        >
           Super Gerenciador de Partidas
         </Link>
 
@@ -130,6 +143,7 @@ export default function Game() {
             </button>
           </div>
 
+          {/* Navegação */}
           <nav className="w-full mt-10 hidden lg:flex">
             <ul className="w-full grid grid-cols-5 justify-center">
               {linksNav.map((link, index) => (
@@ -158,7 +172,22 @@ export default function Game() {
       </header>
 
       {/* Seção Principal */}
-      <section className="mt-8">{renderConteudo()}</section>
+      <section className="mt-8">
+        {/* Informações da sessão */}
+
+        <div className="w-full flex flex-col my-4 border-b border-zinc-800/10 pb-4">
+          <h1 className="text-2xl font-semibold text-zinc-800/80">
+            {currentSession.nome}
+          </h1>
+          <p className="text-zinc-800/50">
+            {formatDate(currentSession.dataInicio)} - Jogadores:{" "}
+            {currentSession.jogadores.length}
+          </p>
+        </div>
+
+        {/* Conteúdo da sessão */}
+        {renderConteudo()}
+      </section>
 
       <Modal
         size="md"
@@ -187,9 +216,7 @@ export default function Game() {
         </ul>
       </Modal>
 
-      {endLoading && (
-        <Loading label="Finalizando..."/>
-      )}
+      {endLoading && <Loading label="Finalizando..." />}
     </main>
   );
 }
