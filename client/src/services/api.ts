@@ -14,8 +14,8 @@ const api = axios.create({
   baseURL: resolvedBaseUrl,
 })
 
-export const createSessionApi = (jogadores: { nome: string; cor: PlayerColor }[]): Promise<GameSession> =>
-  api.post("/sessions/new-session", { jogadores }).then(res => res.data as GameSession);
+export const createSessionApi = (nome: string, jogadores: { nome: string; cor: PlayerColor }[]): Promise<GameSession> =>
+  api.post("/sessions/new-session", { nome, jogadores }).then(res => res.data as GameSession);
 
 export const getSessionsApi = () => 
   api.get("/sessions/all-sessions").then(res => res.data as GameSession[]);

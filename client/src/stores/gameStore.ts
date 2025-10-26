@@ -40,6 +40,7 @@ interface GameStore {
   propertiesCache: Record<number, Propriedade>;
 
   createSession: (
+    nome: string,
     players: { nome: string; cor: PlayerColor }[]
   ) => Promise<number | undefined>;
   getSessions: () => Promise<void>;
@@ -132,10 +133,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   error: null,
   propertiesCache: {},
 
-  createSession: async (players) => {
+  createSession: async (nome: string, players: { nome: string; cor: PlayerColor }[]) => {
     set({ loading: true, error: null });
     try {
-      const newSession = await createSessionApi(players);
+      const newSession = await createSessionApi(nome, players);
       if (!newSession) return;
 
       set((state) => ({

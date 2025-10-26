@@ -9,7 +9,7 @@ import {
   PLAYER_COLORS,
   PlayerColor,
 } from "@/types/game";
-import { ArrowLeft, GamepadIcon, Minus, Plus, Users } from "lucide-react";
+import { ArrowLeft, GamepadIcon, Minus, Pencil, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -28,6 +28,7 @@ export default function NewSession() {
   const [reqLoading, setReqLoading] = useState(false);
 
   const [numPlayers, setNumPlayers] = useState(2);
+  const [sessionName, setSessionName] = useState("");
   const [players, setPlayers] = useState<PlayerForm[]>([
     { nome: "", cor: null, saldo: 0 },
     { nome: "", cor: null, saldo: 0 },
@@ -42,7 +43,7 @@ export default function NewSession() {
       // Adicionar novos jogadores
       const newPlayers = [...players];
       for (let i = players.length; i < newNum; i++) {
-        newPlayers.push({ nome: "", cor: null, saldo: 0});
+        newPlayers.push({ nome: "", cor: null, saldo: 0 });
       }
       setPlayers(newPlayers);
     } else if (newNum < players.length) {
@@ -76,13 +77,18 @@ export default function NewSession() {
       "black",
       "orange",
       "pink",
-      "emerald"
+      "emerald",
     ];
 
     return allColors.filter((color) => !usedColors.includes(color));
   };
 
   const validateForm = (): boolean => {
+    if (sessionName.trim().length < 3) {
+      toast.error("Nome da sessão deve ter pelo menos 3 caracteres");
+      return false;
+    }
+
     // Verificar se todos os nomes estão preenchidos
     for (let i = 0; i < numPlayers; i++) {
       if (!players[i]?.nome.trim()) {
@@ -129,12 +135,12 @@ export default function NewSession() {
     const validPlayers = players.slice(0, numPlayers).map((p) => ({
       nome: p.nome.trim(),
       cor: p.cor!,
-      saldo: 25000
+      saldo: 25000,
     }));
 
     try {
       setReqLoading(true);
-      const sessionId = await createSession(validPlayers); // ✅ await
+      const sessionId = await createSession(sessionName, validPlayers); // ✅ await
       if (sessionId) {
         toast.success("Sessão criada com sucesso!");
         setReqLoading(false);
@@ -210,6 +216,20 @@ export default function NewSession() {
                 <Plus className="w-5 h-5 text-gray-600" />
               </button>
             </div>
+
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900 mb-2">
+                <Pencil className="inline w-5 h-5 text-green-600 mr-2 rotate-y-180" />
+                Nome da Sessão
+              </h1>
+              <input
+                type="text"
+                value={sessionName}
+                onChange={(e) => setSessionName(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="Digite o nome da sessão"
+              />
+            </div>
           </div>
 
           {/* Configuração dos Jogadores */}
@@ -237,34 +257,34 @@ export default function NewSession() {
                     </h3>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nome
-                      </label>
-                      <input
-                        type="text"
-                        value={players[index]?.nome || ""}
-                        onChange={(e) =>
-                          handlePlayerChange(index, "nome", e.target.value)
-                        }
-                        className="w-full rounded-md text-zinc-800/60 border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="Digite o nome do jogador"
-                      />
-                    </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Nome
+                        </label>
+                        <input
+                          type="text"
+                          value={players[index]?.nome || ""}
+                          onChange={(e) =>
+                            handlePlayerChange(index, "nome", e.target.value)
+                          }
+                          className="w-full rounded-md text-zinc-800/60 border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="Digite o nome do jogador"
+                        />
+                      </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Cor
-                      </label>
-                      <ColorDropdown
-                        value={players[index]?.cor || null}
-                        onChange={(color: PlayerColor) =>
-                          handlePlayerChange(index, "cor", color)
-                        }
-                        availableColors={getAvailableColorsForPlayer(index)}
-                        placeholder="Selecione uma cor"
-                      />
-                    </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Cor
+                        </label>
+                        <ColorDropdown
+                          value={players[index]?.cor || null}
+                          onChange={(color: PlayerColor) =>
+                            handlePlayerChange(index, "cor", color)
+                          }
+                          availableColors={getAvailableColorsForPlayer(index)}
+                          placeholder="Selecione uma cor"
+                        />
+                      </div>
                     </div>
 
                     {/* Preview do jogador */}
@@ -337,9 +357,7 @@ export default function NewSession() {
           </div>
         </div>
       </div>
-      {reqLoading && (
-        <Loading label="Carregando..."/>
-      )}
+      {reqLoading && <Loading label="Carregando..." />}
     </div>
   );
 }

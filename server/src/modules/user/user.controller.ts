@@ -54,7 +54,15 @@ const userController = {
 
       if (!selectPlayer) return res.status(404).json({ message: "Jogador não encontrado" })
       
-      if (selectPlayer.sessionPosses.length > 0) return res.status(400).json({ message: "Jogador possui propriedades" })
+      if (selectPlayer.sessionPosses.length > 0) {
+        // Excluir posses associadas ao jogador
+        await prisma.sessionPosses.updateMany({
+          where: { playerId: selectPlayer.id },
+          data: {
+            playerId: null,
+          },
+        });
+      }
 
       const player = await prisma.sessionPlayer.delete({
         where: { id: parseInt(playerId) },

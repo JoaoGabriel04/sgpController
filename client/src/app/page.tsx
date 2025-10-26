@@ -109,7 +109,7 @@ export default function Home() {
 
       <footer className="w-full h-25 flex flex-col justify-center items-center mt-10 border-t border-zinc-800/10 text-zinc-800/40 text-sm text-center">
         <span>SuperMáquina - Versão Digital do Clássico Jogo de Tabuleiro</span>
-        <span>v1.2.5</span>
+        <span>v1.2.6</span>
       </footer>
 
       <Modal
@@ -126,7 +126,7 @@ export default function Home() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-gray-900">
-                        Sessão {session.id}
+                        {session.nome}
                       </h3>
                       <div className="flex items-center text-sm text-gray-500 mt-1">
                         <Users className="w-4 h-4 mr-1" />
