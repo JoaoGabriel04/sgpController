@@ -283,7 +283,7 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Grupos Completos</p>
+              <p className="text-xs text-gray-500">Monopólios</p>
               <p className="text-sm font-semibold text-gray-800">
                 {totalGroupsComplete}
               </p>
