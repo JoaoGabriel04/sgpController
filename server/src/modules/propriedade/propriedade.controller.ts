@@ -58,7 +58,7 @@ const propsController = {
         }
       })
 
-      if (hipotecada) valorCompra = propriedade.custo_compra + 20%(propriedade.custo_compra)
+      if (hipotecada) valorCompra = propriedade.custo_compra * 1.2
       else valorCompra = propriedade.custo_compra
 
       // 2️⃣ Atualiza o dono da propriedade
@@ -227,7 +227,7 @@ const propsController = {
       }
 
       // 💰 Verificar custo e saldo
-      const custoCasa = propriedade.posses.propriedade.custo_casa;
+      const valorVendaCasa = propriedade.posses.propriedade.custo_casa / 2;
 
       if (propriedade.casas === 0) return res.status(400).json({ message: "Esta propriedade não possui casas!"})
       
@@ -239,14 +239,14 @@ const propsController = {
         }),
         prisma.sessionPlayer.update({
           where: { id: player.id },
-          data: { saldo: { increment: custoCasa } },
+          data: { saldo: { increment: valorVendaCasa } },
         }),
         prisma.historico.create({
           data: {
             sessionId: Number(sessionId),
             data: new Date(),
             tipo: "VENDA_CASA",
-            detalhes: `${player.nome} vendeu uma casa em ${propriedade.posses.propriedade.nome} por R$ ${custoCasa}`,
+            detalhes: `${player.nome} vendeu uma casa em ${propriedade.posses.propriedade.nome} por R$ ${valorVendaCasa}`,
           },
         }),
       ]);
@@ -493,8 +493,6 @@ const propsController = {
       console.error("Erro ao trocar propriedade!", error);
     }
 
-  }
-
-
+  },
 };
 export default propsController;

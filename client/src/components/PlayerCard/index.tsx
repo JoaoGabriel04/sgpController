@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { DollarSign } from "lucide-react";
 import {
   Player,
@@ -34,75 +34,46 @@ type Group = {
   properties: Propriedade[];
 };
 
-export default function PlayerCard({ player, totalPropertyValue }: PlayerCardProps) {
+export default function PlayerCard({
+  player,
+  totalPropertyValue,
+}: PlayerCardProps) {
   const {
     currentSession,
-    getPropertyById,
-    buyHouse,
-    sellHouse,
     getAluguel,
     loadSession,
     sellPropriedade,
     hipotecarProp,
+    getPropertyById,
+    buyHouse,
+    sellHouse,
   } = useGameStore();
-  const [showMenu, setShowMenu] = useState(false);
-  const [modalProps, setModalProps] = useState(false);
-  const [optionsModal, setOptionsModal] = useState(false);
-  const [propertiesByColor, setPropertiesByColor] = useState<{
-    [key: string]: Group;
-  }>({});
+
+  // ===== Estados =====
+  const [modalStack, setModalStack] = useState<("properties" | "options")[]>(
+    []
+  );
+  const [propertiesByColor, setPropertiesByColor] = useState<
+    Record<string, Group>
+  >({});
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [selectedPropForAction, setSelectedPropForAction] =
     useState<Propriedade | null>(null);
-
   const [reqLoading, setReqLoading] = useState(false);
 
   const playerColor = PLAYER_COLORS.find((color) => color.value === player.cor);
-  
-  // 🔄 Efeito principal para agrupar propriedades e atualizar o modal
-  useEffect(() => {
-    if (!currentSession) return;
- 
-    const groupProperties = async () => {
-      const playerProperties = currentSession.sessionPosses.filter(
-        (p) => p.playerId === player.id
-      );
- 
-      const grouped: Record<string, Group> = {};
- 
-      for (const prop of playerProperties) {
-        const propData: Propriedade | null = await getPropertyById(
-          prop.possesId
-        );
-        if (!propData) continue;
- 
-        const colorInfo = PROPERTY_COLORS.find(
-          (c) => c.value === propData.grupo_cor
-        );
-        if (!colorInfo) continue;
- 
-        if (!grouped[colorInfo.value]) {
-          grouped[colorInfo.value] = {
-            color: colorInfo,
-            properties: [],
-            sessionPosses: [],
-          };
-        }
- 
-        grouped[colorInfo.value].properties.push(propData);
-        grouped[colorInfo.value].sessionPosses.push(prop);
-      }
-      setPropertiesByColor(grouped);
- 
-      // Atualiza o grupo selecionado (se o modal estiver aberto) com os novos dados
-      setSelectedGroup(
-        (currentGroup) =>
-          currentGroup ? grouped[currentGroup.color.value] || null : null
-      );
-    };
- 
-    groupProperties();
-  }, [currentSession, getPropertyById, player.id]);
+  const activeModal = modalStack[modalStack.length - 1] || null;
+
+  // ===== Funções Auxiliares =====
+  const resetModals = () => {
+    setModalStack([]);
+    setSelectedGroup(null);
+    setSelectedPropForAction(null);
+  };
+
+  const handleGoBack = () => {
+    setModalStack((prev) => prev.slice(0, -1));
+  };
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", {
@@ -110,6 +81,58 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
       currency: "BRL",
     }).format(value);
 
+  // Agrupa propriedades por cor
+  useEffect(() => {
+    if (!currentSession) return;
+
+    let isMounted = true;
+
+    const groupProperties = async () => {
+      const playerProperties = currentSession.sessionPosses.filter(
+        (p) => p.playerId === player.id
+      );
+
+      const grouped: Record<string, Group> = {};
+
+      for (const prop of playerProperties) {
+        const propData: Propriedade | null = await getPropertyById(
+          prop.possesId
+        );
+        if (!propData) continue;
+
+        const colorInfo = PROPERTY_COLORS.find(
+          (c) => c.value === propData.grupo_cor
+        );
+        if (!colorInfo) continue;
+
+        if (!grouped[colorInfo.value]) {
+          grouped[colorInfo.value] = {
+            color: colorInfo,
+            properties: [],
+            sessionPosses: [],
+          };
+        }
+
+        grouped[colorInfo.value].properties.push(propData);
+        grouped[colorInfo.value].sessionPosses.push(prop);
+      }
+
+      if (isMounted) {
+        setPropertiesByColor(grouped);
+        setSelectedGroup((currentGroup) =>
+          currentGroup ? grouped[currentGroup.color.value] || null : null
+        );
+      }
+    };
+
+    groupProperties();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentSession, getPropertyById, player.id]);
+
+  // Estatísticas
   const totalGroupsComplete = Object.values(propertiesByColor).filter(
     (group) => {
       const totalInGroup = group.color.total ?? 0;
@@ -117,27 +140,58 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
     }
   ).length;
 
-  function handleConfigPropriedades(color: string) {
-    const group = propertiesByColor[color];
-    if (!group) return;
+  // ===== Funções de venda/hipoteca =====
+  const handleVenderPropriedade = async (
+    propriedadeId: number,
+    userId: number
+  ) => {
+    if (!currentSession) return;
+    setReqLoading(true);
+    try {
+      await sellPropriedade(propriedadeId, currentSession.id, userId);
+      toast.success("Propriedade vendida com sucesso!");
+      await loadSession(currentSession.id);
+      resetModals();
+      handleGoBack();
+    } catch (error) {
+      console.error("Erro ao vender propriedade!", error);
+      toast.error("Falha ao vender propriedade.");
+    } finally {
+      setReqLoading(false);
+    }
+  };
 
-    setSelectedGroup(group);
-    setModalProps(true);
-  }
+  const handleHipotecarPropriedade = async (
+    propriedadeId: number,
+    userId: number
+  ) => {
+    if (!currentSession) return;
+    setReqLoading(true);
+    try {
+      await hipotecarProp(propriedadeId, currentSession.id, userId);
+      toast.success("Propriedade hipotecada com sucesso!");
+      await loadSession(currentSession.id);
+      resetModals();
+      handleGoBack();
+    } catch (error) {
+      console.error("Erro ao hipotecar propriedade!", error);
+      toast.error("Falha ao hipotecar propriedade.");
+    } finally {
+      setReqLoading(false);
+    }
+  };
 
-  // Funções de Ação
   async function handleComprarCasa(propriedadeId: number, userId: number) {
     if (!currentSession) return;
     setReqLoading(true);
     try {
       await buyHouse({ userId, sessionId: currentSession.id, propriedadeId });
       toast.success("Casa comprada com sucesso!");
-      loadSession(currentSession.id);
-      setOptionsModal(false); // Fecha o modal de opções
-      setSelectedPropForAction(null); // Fecha o modal de propriedades
+      await loadSession(currentSession.id);
+      handleGoBack();
     } catch (error) {
       console.error("Erro ao comprar casa!", error);
-      toast.error("Erro ao comprar casa!");
+      toast.error("Falha ao comprar casa.");
     } finally {
       setReqLoading(false);
     }
@@ -149,70 +203,26 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
     try {
       await sellHouse({ userId, sessionId: currentSession.id, propriedadeId });
       toast.success("Casa vendida com sucesso!");
-      loadSession(currentSession.id);
-      setOptionsModal(false); // Fecha o modal de opções
-      setSelectedPropForAction(null); // Fecha o modal de propriedades
-    } catch (error) {
-      console.error("Erro ao comprar casa!", error);
-      toast.error("Erro ao comprar casa!");
-    } finally {
-      setReqLoading(false);
-    }
-  }
-
-  async function handleVenderPropriedade(
-    propriedadeId: number,
-    userId: number
-  ) {
-    if (!currentSession) return;
-    setReqLoading(true);
-    try {
-      await sellPropriedade(propriedadeId, currentSession.id, userId);
-      toast.success("Propriedade vendida com sucesso!");
       await loadSession(currentSession.id);
-
-      setOptionsModal(false);
-      setModalProps(false);
-      setSelectedGroup(null);
-      setSelectedPropForAction(null);
+      handleGoBack();
     } catch (error) {
-      console.error("Erro ao vender propriedade!", error);
-    } finally {
-      setReqLoading(false);
-    }
-  }
-
-  async function handleHipotecarPropriedade(
-    propriedadeId: number,
-    userId: number
-  ) {
-    if (!currentSession) return;
-    setReqLoading(true);
-    try {
-      await hipotecarProp(propriedadeId, currentSession.id, userId);
-      toast.success("Propriedade hipotecada com sucesso!");
-      await loadSession(currentSession.id);
-
-      setOptionsModal(false);
-      setModalProps(false);
-      setSelectedGroup(null);
-      setSelectedPropForAction(null);
-    } catch (error) {
-      console.error("Erro ao vender propriedade!", error);
+      console.error("Erro ao vender casa!", error);
+      toast.error("Falha ao vender casa.");
     } finally {
       setReqLoading(false);
     }
   }
 
   return (
-    <div
-      className={`relative bg-white rounded-lg shadow-md border-2 ${playerColor?.bg.replace(
-        "bg-",
-        "border-"
-      )} overflow-hidden`}
+    <main
+      className={`relative bg-white rounded-lg shadow-md border-2 ${
+        playerColor?.bg?.replace("bg-", "border-") || "border-gray-300"
+      } overflow-hidden`}
     >
       {/* Cabeçalho */}
-      <div className={`${playerColor?.bg} px-4 py-3 text-white`}>
+      <div
+        className={`${playerColor?.bg || "bg-gray-400"} px-4 py-3 text-white`}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-3">
@@ -225,8 +235,8 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
           <MenuOptions
             playerId={player.id}
             playerName={player.nome}
-            show={showMenu}
-            onToggle={() => setShowMenu(!showMenu)}
+            show={false}
+            onToggle={() => {}}
           />
         </div>
       </div>
@@ -244,28 +254,20 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
           </span>
         </div>
 
-        {/* Propriedades agrupadas */}
+        {/* Propriedades */}
         <div className="space-y-2">
           {Object.keys(propertiesByColor).length > 0 ? (
-            Object.entries(propertiesByColor).map(([colorKey, group]) => (
-              <div
-                onClick={() => handleConfigPropriedades(colorKey)}
-                key={colorKey}
-                className={`flex items-center justify-between p-2 bg-gray-50 border ${group.color.border} rounded cursor-pointer hover:bg-gray-100`}
-              >
-                <div className="flex items-center">
-                  <div
-                    className={`w-3 h-3 rounded-full ${group.color.bg} mr-2`}
-                  />
-                  <span className="text-xs font-medium text-gray-700">
-                    {group.color.label}
-                  </span>
-                </div>
-                <span className="text-xs text-gray-600">
-                  {group.properties.length}
-                </span>
-              </div>
-            ))
+            <button
+              onClick={() => setModalStack(["properties"])}
+              className="w-full text-center p-2 bg-gray-100 hover:bg-gray-200 rounded-md text-sm text-gray-700 transition-colors cursor-pointer"
+            >
+              Ver Propriedades (
+              {Object.values(propertiesByColor).reduce(
+                (acc, group) => acc + group.properties.length,
+                0
+              )}
+              )
+            </button>
           ) : (
             <p className="text-xs text-gray-500 italic text-center py-2">
               Nenhuma propriedade
@@ -283,7 +285,7 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Monopólios</p>
+              <p className="text-xs text-gray-500">Grupos Completos</p>
               <p className="text-sm font-semibold text-gray-800">
                 {totalGroupsComplete}
               </p>
@@ -292,76 +294,79 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
         </div>
       </div>
 
+      {/* Modais */}
+
       {/* Modal de propriedades */}
       <Modal
         size="lg"
-        title="Propriedades"
-        isOpen={modalProps}
-        onClose={() => {
-          setModalProps(false);
-          setSelectedGroup(null);
-        }}
+        title={`Propriedades de ${player.nome}`}
+        isOpen={activeModal === "properties"}
+        onClose={resetModals}
       >
-        <div>
-          <h3
-            className={`text-lg font-semibold mb-2 flex items-center ${selectedGroup?.color?.text}`}
-          >
-            <div
-              className={`w-4 h-4 rounded-full ${selectedGroup?.color?.bg} mr-2`}
-            />
-            {selectedGroup?.color?.label}
-          </h3>
-
-          <ul className="flex flex-col lg:flex-row lg:justify-between gap-4">
-            {selectedGroup?.properties?.map((prop: Propriedade) => {
-              const casas =
-                selectedGroup.sessionPosses?.find(
-                  (sp) => sp.possesId === prop.id
-                )?.casas ?? 0;
-
-              const aluguel = getAluguel(prop, casas);
-
-              return (
-                <li
-                  key={prop.id}
-                  onClick={() => {
-                    setSelectedPropForAction(prop);
-                    setOptionsModal(true);
-                  }}
-                  className={`w-full lg:w-1/3 h-30 border border-t-4 ${selectedGroup?.color?.border} rounded p-2 text-sm text-gray-700 flex flex-col gap-2 lg:items-center lg:justify-between cursor-pointer hover:bg-gray-100 transition-colors`}
+        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+          {Object.entries(propertiesByColor)
+            .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+            .map(([colorKey, group]) => (
+              <div key={colorKey}>
+                <h3
+                  className={`text-lg font-semibold mb-2 flex items-center ${group.color.text}`}
                 >
-                  <div className="flex flex-col lg:items-center">
-                    <span>{prop.nome}</span>
-                    <span className="text-xs text-gray-500">
-                      Casas: {casas}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      Alguel: {aluguel}
-                    </span>
-                  </div>
-                  <div className="flex flex-col lg:items-center">
-                    <span className={`font-bold text-green-500`}>
-                      Valor casa: R$ {prop.custo_casa}
-                    </span>
-                    <span className="text-xs text-red-500">
-                      Hipoteca: {prop.hipoteca}
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                  <div
+                    className={`w-4 h-4 rounded-full ${group.color.bg} mr-2`}
+                  />
+                  {group.color.label}
+                </h3>
+
+                <ul className="flex flex-col lg:flex-row lg:justify-between gap-4">
+                  {group.properties?.map((prop: Propriedade) => {
+                    const casas =
+                      group.sessionPosses?.find((sp) => sp.possesId === prop.id)
+                        ?.casas ?? 0;
+                    const aluguel = getAluguel(prop, casas);
+
+                    return (
+                      <li
+                        key={prop.id}
+                        onClick={() => {
+                          setSelectedPropForAction(prop);
+                          setSelectedGroup(group);
+                          setModalStack((prev) => [...prev, "options"]);
+                        }}
+                        className={`w-full lg:w-1/3 h-30 border border-t-4 ${group.color.border} rounded p-2 text-sm text-gray-700 flex flex-col gap-2 lg:items-center lg:justify-between cursor-pointer hover:bg-gray-100 transition-colors`}
+                      >
+                        <div className="flex flex-col lg:items-center">
+                          <span>{prop.nome}</span>
+                          <span className="text-xs text-gray-500">
+                            Casas: {casas}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            Aluguel: {aluguel}
+                          </span>
+                        </div>
+                        <div className="flex flex-col lg:items-center">
+                          <span className="font-bold text-green-500">
+                            Valor casa: R$ {prop.custo_casa}
+                          </span>
+                          <span className="text-xs text-red-500">
+                            Hipoteca: {prop.hipoteca}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
         </div>
       </Modal>
 
+      {/* Modal de ações */}
       <Modal
         size="sm"
-        title={`Opções para "${selectedPropForAction?.nome}"`}
-        isOpen={optionsModal}
-        onClose={() => {
-          setOptionsModal(false);
-          setSelectedPropForAction(null);
-        }}
+        title={`${selectedPropForAction?.nome}`}
+        isOpen={activeModal === "options"}
+        onClose={resetModals}
+        onBack={handleGoBack}
       >
         <nav className="mt-4 flex flex-col gap-4">
           <button
@@ -398,7 +403,7 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
                 handleComprarCasa(selectedPropForAction.id, player.id);
               }
             }}
-            className={`w-full lg:w-auto py-2 lg:px-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50`}
+            className="w-full lg:w-auto py-2 lg:px-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {reqLoading ? "Comprando..." : "Comprar Casa"}
           </button>
@@ -426,7 +431,7 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
                 handleVenderCasa(selectedPropForAction.id, player.id);
               }
             }}
-            className={`w-full lg:w-auto py-2 lg:px-2 bg-amber-500 text-white rounded cursor-pointer hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50`}
+            className="w-full lg:w-auto py-2 lg:px-2 bg-amber-500 text-white rounded cursor-pointer hover:bg-amber-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {reqLoading ? "Vendendo..." : "Vender Casa"}
           </button>
@@ -435,7 +440,6 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
             disabled={!selectedPropForAction || reqLoading}
             onClick={() => {
               if (!selectedPropForAction) return;
-
               const hasHouses = selectedGroup?.sessionPosses?.some(
                 (p) => p.casas > 0
               );
@@ -445,8 +449,8 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
                 );
                 return;
               }
-
-              if (window.confirm(
+              if (
+                window.confirm(
                   `Tem certeza que deseja vender "${
                     selectedPropForAction.nome
                   }" por ${formatCurrency(selectedPropForAction.hipoteca)}?`
@@ -455,7 +459,7 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
                 handleVenderPropriedade(selectedPropForAction.id, player.id);
               }
             }}
-            className={`w-full lg:w-auto py-2 lg:px-2 bg-red-500 text-white rounded cursor-pointer hover:bg-red-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50`}
+            className="w-full lg:w-auto py-2 lg:px-2 bg-red-500 text-white rounded cursor-pointer hover:bg-red-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {reqLoading ? "Vendendo..." : "Vender Propriedade"}
           </button>
@@ -464,17 +468,15 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
             disabled={!selectedPropForAction || reqLoading}
             onClick={() => {
               if (!selectedPropForAction) return;
-
               const hasHouses = selectedGroup?.sessionPosses?.some(
                 (p) => p.casas > 0
               );
               if (hasHouses) {
                 toast.warning(
-                  "Venda todas as casas do grupo antes de vender uma propriedade!"
+                  "Venda todas as casas do grupo antes de hipotecar uma propriedade!"
                 );
                 return;
               }
-
               if (
                 window.confirm(
                   `Tem certeza que deseja hipotecar "${
@@ -485,12 +487,12 @@ export default function PlayerCard({ player, totalPropertyValue }: PlayerCardPro
                 handleHipotecarPropriedade(selectedPropForAction.id, player.id);
               }
             }}
-            className={`w-full lg:w-auto py-2 lg:px-2 bg-indigo-500 text-white rounded cursor-pointer hover:bg-indigo-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50`}
+            className="w-full lg:w-auto py-2 lg:px-2 bg-indigo-500 text-white rounded cursor-pointer hover:bg-indigo-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             {reqLoading ? "Hipotecando..." : "Hipotecar"}
           </button>
         </nav>
       </Modal>
-    </div>
+    </main>
   );
 }

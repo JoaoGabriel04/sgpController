@@ -1,15 +1,23 @@
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  onBack?: () => void;
   children: React.ReactNode;
   size: "sm" | "md" | "lg" | "xl";
 }
 
-export default function Modal({ isOpen, onClose, title, children, size }: ModalProps) {
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  onBack,
+  children,
+  size,
+}: ModalProps) {
   const sizeClasses = {
     sm: "max-w-md",
     md: "max-w-lg",
@@ -49,7 +57,20 @@ export default function Modal({ isOpen, onClose, title, children, size }: ModalP
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                <div className="flex items-center gap-3">
+                  {onBack && (
+                    <button
+                      onClick={onBack}
+                      className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
+                    >
+                      <ArrowLeft className="h-5 w-5" />
+                    </button>
+                  )}
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {title}
+                  </h3>
+                </div>
+
                 <button
                   onClick={onClose}
                   className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
