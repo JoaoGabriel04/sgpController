@@ -227,7 +227,7 @@ const propsController = {
       }
 
       // 💰 Verificar custo e saldo
-      const valorVendaCasa = propriedade.posses.propriedade.custo_casa / 2;
+      const valorVendaCasa = propriedade.posses.propriedade.custo_casa;
 
       if (propriedade.casas === 0) return res.status(400).json({ message: "Esta propriedade não possui casas!"})
       
