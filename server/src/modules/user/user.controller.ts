@@ -60,6 +60,7 @@ const userController = {
           where: { playerId: selectPlayer.id },
           data: {
             playerId: null,
+            casas: 0,
           },
         });
       }
