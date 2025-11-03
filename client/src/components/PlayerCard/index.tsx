@@ -61,6 +61,7 @@ export default function PlayerCard({
     useState<Propriedade | null>(null);
   const [reqLoading, setReqLoading] = useState(false);
 
+  const [showMenu, setShowMenu] = useState(false);
   const playerColor = PLAYER_COLORS.find((color) => color.value === player.cor);
   const activeModal = modalStack[modalStack.length - 1] || null;
 
@@ -235,8 +236,8 @@ export default function PlayerCard({
           <MenuOptions
             playerId={player.id}
             playerName={player.nome}
-            show={false}
-            onToggle={() => {}}
+            show={showMenu}
+            onToggle={() => setShowMenu(!showMenu)}
           />
         </div>
       </div>
