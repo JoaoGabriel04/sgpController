@@ -1,22 +1,52 @@
 "use client";
 
 import { useGameStore } from "@/stores/gameStore";
-import { useMemo } from "react";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { useMemo, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 
 export default function Historico() {
   const { currentSession } = useGameStore();
+  const [termoPesquisa, setTermoPesquisa] = useState("");
 
   // Lê o histórico diretamente da sessão e memoriza a ordenação
-  const historicoOrdenado = useMemo(() => {
+  const historicoFiltradoEOrdenado = useMemo(() => {
     if (!currentSession?.historico) return [];
+
+    const historico = [...currentSession.historico];
+
+    const filtrado = historico.filter((transacao) => {
+      const termo = termoPesquisa.toLowerCase();
+      return (
+        transacao.detalhes.toLowerCase().includes(termo) ||
+        transacao.tipo.toLowerCase().includes(termo) ||
+        String(transacao.id).includes(termo)
+      );
+    });
+
     // Cria uma cópia e ordena de forma decrescente para mostrar os mais recentes primeiro
-    return [...currentSession.historico].sort((a, b) => b.id - a.id);
-  }, [currentSession?.historico]);
+    return filtrado.sort((a, b) => b.id - a.id);
+  }, [currentSession?.historico, termoPesquisa]);
 
   return (
     <main>
-      {historicoOrdenado.length > 0 ? (
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Pesquisar no histórico por ID, tipo ou detalhes..."
+          value={termoPesquisa}
+          onChange={(e) => setTermoPesquisa(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md"
+        />
+      </div>
+      {historicoFiltradoEOrdenado.length > 0 ? (
         <Table>
           <TableCaption>Histórico de Transações</TableCaption>
           <TableHeader>
@@ -28,7 +58,7 @@ export default function Historico() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {historicoOrdenado.map((transacao) => (
+            {historicoFiltradoEOrdenado.map((transacao) => (
               <TableRow key={transacao.id}>
                 <TableCell className="font-medium">{transacao.id}</TableCell>
                 <TableCell>{transacao.tipo}</TableCell>
@@ -39,7 +69,9 @@ export default function Historico() {
           </TableBody>
         </Table>
       ) : (
-        <p>Nenhuma transação encontrada.</p>
+        <p className="text-center text-gray-500 mt-4">
+          Nenhuma transação encontrada para a sua pesquisa.
+        </p>
       )}
     </main>
   );
