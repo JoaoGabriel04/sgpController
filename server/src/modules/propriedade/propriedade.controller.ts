@@ -302,7 +302,7 @@ const propsController = {
       if (propriedade.casas > 0) return res.status(400).json({ message: "Esta propriedade ainda possui casas!"})
 
       // valor recebido pela venda (usa hipoteca como no seu código)
-      const valorVenda = propriedade.posses.propriedade.hipoteca;
+      const valorVenda = propriedade.posses.propriedade.custo_compra;
 
       // 🔒 Transação: remove dono da posse + credita jogador + registra histórico
       await prisma.$transaction([
